@@ -1,186 +1,185 @@
 # Livepeer Whitepaper
 
-**Protocol and Economic Incentives For a Decentralized Live Video Streaming Network**
+** Протокол и экономические стимулы для децентрализованной сети потокового видео **
 
-Doug Petkanics <doug@livepeer.org>  
-Eric Tang <eric@livepeer.org>
+Дуг Петканикс <doug@livepeer.org>
+Эрик Тан <eric@livepeer.org>
 
-## Abstract ###########################################
+## Аннотация ###########################################
 
-The Livepeer project aims to deliver a live video streaming network protocol that is fully decentralized, highly scalable, crypto token incentivized, and results in a solution which can serve as the live media layer in the decentralized development (web3) stack. In addition, Livepeer is meant to provide an economically efficient alternative to centralized broadcasting solutions for any existing broadcaster. In this document we describe the Livepeer Protocol - a delegated stake based protocol for incentivizing participants in a live video broadcast network in a game-theoretically secure way. We present solutions for the scalable verification of decentralized work, as well as the prevention of useless work in an attempt to game the token allocations in an inflationary system.
+Проект Livepeer нацелен на предоставление сетевого протокола для прямых видеотрансляций, который полностью децентрализован, хорошо масштабируется, стимулируется крипто-токенами, и приводит к решению, которое может служить медиа-уровнем для прямых видеотрансляций в стеке децентрализованной разработки (web3). Кроме того, Livepeer призван обеспечить экономически эффективную альтернативу централизованным вещательным решениям для всех существующих вещателей. В этом документе мы описываем протокол Livepeer - протокол на основе делегированных ставок для стимулирования участников сети потокового видео вещания безопасным (в теории) и игровым способом. Мы представляем решения для масштабируемой проверки децентрализованно выполненных заданий, а также для предотвращения бесполезной работы в попытке получить токены, эмитируемые в инфляционной системе.
 
+## Оглавление ###########################################
 
-## Table of Contents ###########################################
-
-* [Introduction and Background](#introduction-and-background)
-    * [The Live Video Stack](#the-live-video-stack)
-* [Livepeer Protocol](#livepeer-protocol)
-    * [Video Segments](#video-segments)
-    * [Livepeer Token](#livepeer-token)
-    * [Protocol Roles](#protocol-roles)
-    * [Consensus](#consensus)
-    * [Bonding + Delegation](#bonding--delegation)
-    * [Transcoder() Transaction](#transcoder-transaction)
-    * [Broadcast + Transcoding Job](#broadcast--transcoding-job)
-        * [Preprocessing](#preprocessing)
-        * [The Job](#the-job)
-        * [End Job](#end-job)
-    * [Verification of Work](#verification-of-work)
-        * [A Note On Truebit](#a-note-on-truebit)
-    * [Token Generation](#token-generation)
-    * [Slashing](#slashing)
-    * [Token Distribution](#token-distribution)
-    * [Governance](#governance)
-* [Attacks](#attacks)
-    * [Consensus Attacks](#consensus-attacks)
+* [Введение и предыстория](#introduction-and-background)
+    * [Стек видео-технологий](#the-live-video-stack)
+* [Протокол Livepeer](#livepeer-protocol)
+    * [Сегменты видео](#video-segments)
+    * [Токен Livepeer](#livepeer-token)
+    * [Роли в протоколе](#protocol-roles)
+    * [Консенсус](#consensus)
+    * [Связывание + делегирование](#bonding--delegation)
+    * [Транзакция Transcoder()](#transcoder-transaction)
+    * [Вещание и задания по транскодированию](#broadcast--transcoding-job)
+        * [Предварительная обработка](#preprocessing)
+        * [Задание](#the-job)
+        * [Окончание выполнения задания](#end-job)
+    * [Проверка выполненного задания](#verification-of-work)
+        * [Примечание о Truebit](#a-note-on-truebit)
+    * [Генерация токенов](#token-generation)
+    * [Сокращение](#slashing)
+    * [Распределение токенов](#token-distribution)
+    * [Управление](#governance)
+* [Атаки](#attacks)
+    * [Согласованные атаки](#consensus-attacks)
     * [DDoS](#ddos)
-    * [Useless or Self Dealing Transcoder](#useless-or-self-dealing-transcoder)
-    * [Transcoder Griefing](#transcoder-griefing)
-    * [Chain Reorg](#chain-reorg)
-* [Live Video Distribution](#live-video-distribution)
-* [Use Cases](#use-cases)
-    * [Pay-As-You-Go Content Consumption](#pay-as-you-go-content-consumption)
-    * [Auto-Scaling Social Video Services](#auto-scaling-social-video-services)
-    * [Uncensorable Live Journalism](#uncensorable-live-journalism)
-    * [Video Enabled DApps](#video-enabled-dapps)
-* [Summary](#summary)
-* [Appendix](#appendix)
-    * [Livepeer Protocol Parameter Reference](#livepeer-protocol-parameter-reference)
-    * [Livepeer Protocol Transaction Types](#livepeer-protocol-transaction-types)
-* [References](#references)
+    * [Бесполезный или замкнутый на себе транскодер](#useless-or-self-dealing-transcoder)
+    * [Проблемы для транскодера](#transcoder-griefing)
+    * [Реорганизация блокчейна](#chain-reorg)
+* [Распространение потокового видео](#live-video-distribution)
+* [Возможности для применения](#use-cases)
+    * [Потребление контента по принципу Pay-As-You-Go](#pay-as-you-go-content-consumption)
+    * [Автоматически масштабируемые социальные видео сервисы](#auto-scaling-social-video-services)
+    * [Журналистика без цензуры](#uncensorable-live-journalism)
+    * [Видео с поддержкой DApps](#video-enabled-dapps)
+* [Резюме](#summary)
+* [Приложение](#appendix)
+    * [Справочник по параметрам протокола Livepeer](#livepeer-protocol-parameter-reference)
+    * [Типы транзакций в протоколе Livepeer](#livepeer-protocol-transaction-types)
+* [Ссылки](#Ссылки)
 
-*Note: This paper was originally published in April, 2017. A scaling proposal called "Streamflow" has been proposed in December, 2018 which outlines some iterations and enhancements on some of the ideas presented below. Read the [Streamflow Proposal here](https://github.com/livepeer/wiki/blob/master/STREAMFLOW.md).* 
+*Примечание: этот документ был первоначально опубликован в апреле 2017 года. В декабре 2018 года было сделано предложение по масштабированию платформы под названием «Streamflow», в котором изложены следующие шаги и усовершенствования некоторых идей, представленных ниже. Почитать о [Streamflow можно здесь] (https://github.com/livepeer/wiki/blob/master/STREAMFLOW.md).*
 
-## Introduction and Background ###########################################
+## Введение и предыстория #################################################
 
-The vision of the decentralized web has begun to be realized over the past couple years with the emergence of networks like [Ethereum](http://ethereum.org) to enable trustless computing, [Swarm](http://swarm-gateways.net/bzz:/theswarm.eth/) and [IPFS/Filecoin](http://ipfs.io) to enable decentralized storage and content distribution, Bitcoin and various token projects to facilitate p2p transfer of value, and decentralized name registries like [Blockstack](http://blockstack.org) and [ENS](http://ens.readthedocs.io/en/latest/introduction.html) to provide human accessible names to content and identities. These elements form the basis for decentralized applications (DApps) to be built in the form of largely static or infrequently updated web or mobile content, but at the moment DApps still lack the ability to include streaming media and data in an open and decentralized way. The goal of the Livepeer project is to decentralize live video broadcast over the internet.
+Концепция децентрализованной сети начала воплощаться в жизнь 2 года назад с появлением сетей, таких как [Ethereum](http://ethereum.org), [Swarm](http://swarm-gateways.net/bzz:/theswarm.eth/) для обеспечения надежных вычислений, [IPFS/Filecoin](http://ipfs.io) для обеспечения децентрализованного хранения и распространения контента, биткойн и различных токенов для облегчения p2p-передачи ценностей, децентрализованных реестров имен, таких как [Blockstack](http://blockstack.org), [ENS] (http://ens.readthedocs.io/en/latest/introduction.html) для предоставления человеко-ориентированных названий для контента и идентификаторов. Эти элементы формируют основу для децентрализованных приложений (DApps), которые должны быть построены в форме в основном статического или редко обновляемого веб или мобильного контента, но в настоящий момент DApps по-прежнему не имеют возможности включать в себя потоковое мультимедиа и потоковые данные открытым и децентрализованным способом. Цель проекта Livepeer - децентрализовать прямые видеотрансляции через Интернет.
 
-The [Livepeer Project Overview](https://github.com/livepeer/wiki/wiki/Project-Overview) provides a nice introduction to the current state of live video on the internet. This whitepaper will largely focus on the cryptoeconomic protocol details of Livepeer, rather than the business case, but in summary the overview describes the current state of live streaming as growing at a rapid pace, centralized, and expensive. On the other hand, a fully decentralized P2P solution, where nodes contributed their own computation and bandwidth in service of streaming live video would be more open and scalable, as there would be no limit to the number of connections that could be served.
+[Обзор проекта Livepeer](https://github.com/livepeer/wiki/wiki/Project-Overview) дает хорошее представление о текущем состоянии прямых видеотрансляций в Интернете. В этом техническом документе основное внимание будет уделено деталям криптоэкономического протокола Livepeer, а не конкретным его применениям, однако можно сказать, что текущие технологии потокового вещания в этом обзоре описываются как быстро растущее, централизованные и дорогие. С другой стороны, полностью децентрализованное p2p-решение, в котором узлы производили бы свои собственные вычисления и предоставляли бы канал для передачи данных, было бы более открытым и масштабируемым, поскольку в нем бы не было ограничения на количество обслуживаемых соединений.
 
-This technology is certainly available to a certain extent, but to date there has been no incentive to get users to run nodes that provide this functionality, nor has there been proper funding for the development of an open protocol that can facilitate this in a way that benefits the entire internet rather than one centralized company. However, with the recent emergence of crypto token powered protocols [[2, 3](#references)], there is now an opportunity to simultaneously incentivize users to contribute computation and bandwidth towards live video broadcast, in a way that aligns with financing the development of an open media server solution capable of delivering live streamed video according to all the latest standards and formats required to reach the full range of devices. Additionally, the economic actions traditionally seen as a result of token powered protocols indicate that the cost to the broadcaster in order to use the Livepeer network could be cheaper than the cost of any centralized solution.
+Безусловно, эта технология уже в определенной степени доступна, но на сегодняшний день все еще не создано никаких стимулов для того, чтобы пользователи запускали узлы, реализущие этот функционал, и не получено надлежащего финансирования для разработки открытого протокола, который сможет сделать эту технологию выгодной для всего интернета, а не для одной централизованной компании. Однако, с недавним появлением протоколов на основе крипто-токенов [[2, 3](#references)], появилась возможность одновременно стимулировать пользователей предоставлять вычислительные мощности и пропускную способность для прямых видеотрансляций таким образом, чтобы это способствовало финансированию разработки решения с открытым медиасервером, способного передавать потоковое видео в режиме реального времени в соответствии со всеми последними стандартами и форматами для охвата всего спектра устройств. Кроме этого можно ожидать, что затраты для вещателя на использование сети Livepeer могут быть значительно ниже, чем стоимость любого централизованного решения.
 
-As the Livepeer technology and protocol are delivered, it will enable users to participate in the following flow:
+По мере реализации технологии и протокола Livepeer, пользователи смогут участвовать в нем следующим образом:
 
-1. Capture a video on your camera, phone, screen, or web cam and send it into the Livepeer network.
-2. Nodes running within the network will encode it into all the necessary formats to reach every supported device. Users running these nodes will be incentivized via fees paid by the broadcaster in ETH, and the opportunity to build reputation through the protocol token to earn the right to perform more work in the future.
-3. Any user on the network can request to view the stream, and it will automatically be distributed to them in near realtime.
+1. Вещатель будет создавать видео при помощи камеры, телефона, экрана или веб-камеры и отправлять его в сеть Livepeer.
+2. Узлы, обслуживающие сеть Livepeer, будут кодировать этот видеопоток во все необходимые форматы всех поддерживаемых устройств. Пользователи, использующие эти узлы, будут поощряться за счет комиссионных, выплачиваемых вещателем в ETH, и возможностью создать репутацию при помощи токена протокола, чтобы получить право брать на себя больше заданий по транскодированию в будущем.
+3. Любой пользователь сети Livepeer сможет запросить просмотр видеопотока, и он автоматически получит его в режиме реального времени.
 
-<img src="https://s3.amazonaws.com/livepeerorg/LPExample.png" alt="Livepeer Network Example" style="width: 750px">
+<img src = "https://s3.amazonaws.com/livepeerorg/LPExample.png" alt = "Пример сети Livepeer" style = "width: 750px">
 
-### The Live Video Stack
+### Стек видео-технологий
 
-The technology stack for broadcasting live video has evolved over many years and contains many layers. Broadcasters need to capture video at the source, interface with a media server to process and transcode the video into many different formats, distribute the video across a network, and then allow the video to be played in high perceived quality by the end consumer. There are also economic questions that are introduced when one thinks through this stack, such as whether it should be the broadcaster or consumer who should be paying for the bandwidth to transfer the video.
+Технологический стек для трансляции видео в прямом эфире развивался на протяжении многих лет и на данный момент содержит множество слоев. Вещателям необходимо захватывать видео источника, взаимодействовать с медиасервером для обработки и транскодирования видео в различные форматы, распространять видео по сети, а затем разрешать конечному потребителю воспроизводить видео с высоким качеством картинки. Есть также вопросы экономического характера, которые возникают при проектировании данного стека, например, должны ли вещатель или потребитель платить за канал передачи видеоданных.
 
-A typical live streaming platform today needs to support RTMP, HLS, Mpeg-Dash video formats in H.264 and VP8 codec. New codecs like H.265/HEVC, VP9, and AV1 will become more popular in the near future as consumers become more accustomed to higher video quality.  For HLS alone, [Apple suggests](https://developer.apple.com/library/content/documentation/General/Reference/HLSAuthoringSpec/Requirements.html#//apple_ref/doc/uid/TP40016596-CH2-SW1) bitrates from 145kb/s all the way up to 7800kb/s, in order to serve the different types of devices under different conditions. All of this adds a significant amount of complexity and cost to live video broadcasting.
+Типичная платформа для потокового вещания сегодня должна поддерживать такие видео форматы как RTMP, HLS, Mpeg-Dash, кодеки H.264 и VP8. Новые кодеки, такие как H.265/HEVC, VP9 и AV1, в ближайшем будущем станут весьма популярными, так как потребители все больше будут привыкать к высокому качеству видео. Только для HLS [Apple предлагает] (https://developer.apple.com/library/content/documentation/General/Reference/HLSAuthoringSpec/Requirements.html#//apple_ref/doc/uid/TP40016596-CH2-SW1) битрейты от 145 кбит/с до 7800 кбит/с для обслуживания всевозможных устройств в различных условиях. Все это значительно усложняет процесс и стоимость прямой видеотрансляции.
 
-The existing decentralized development stack (web3) contains solutions for some of the layers required for a live video platform, like file transfer and payments, but currently there are no solutions for the capture and interface, transcoding and processing, and serving layers of live video. For this, Livepeer introduces the [Livepeer Media Server (LPMS)](https://github.com/livepeer/wiki/wiki/Livepeer-Media-Server) - an open source implementation of a media server which provides all of the live video specific functionality necessary for DApp developers and existing broadcasters to build live functionality into their applications. [Read more about it here](https://github.com/livepeer/wiki/wiki/Livepeer-Media-Server).
+Существующий децентрализованный стек разработки (web3) содержит решения для некоторых уровней, необходимых для платформы потокового видео, таких как передача файлов и оплата, но в настоящее время нет решений для захвата, интерфейса, транскодирования и обработки, а также для обслуживания различных слоев видеопотока. По этой причине Livepeer представляет [Livepeer Media Server (LPMS)] (https://github.com/livepeer/wiki/wiki/Livepeer-Media-Server) - реализацию медиа-сервера с открытым исходным кодом, которая предоставляет все функции потокового видео, необходимые разработчикам DApp и существующим вещателям для использования в своих приложениях. [Подробнее об этом читайте здесь] (https://github.com/livepeer/wiki/wiki/Livepeer-Media-Server).
 
-As a standalone application, any developer could build a live application on top of the LPMS, but it would still be centralized and would need to be scaled through traditional means. However when every node on the Livepeer network is running the LPMS, and the protocol’s economic incentives ensure that those nodes will contribute their processing power and bandwidth in service of transcoding and distributing live video, **a self-scaling, pay-as-you-go network is made available to developers, who can simply send their live stream into the network, and have the implementation details of scaling, payment, and media hosting abstracted away**.
+Любой разработчик, конечно же, может создать отдельное приложение поверх LPMS, но оно все равно будет централизованным и его необходимо будет масштабировать с помощью традиционных средств. Однако, когда каждый узел сети Livepeer работает с LPMS, а экономические стимулы протокола гарантируют, что эти узлы будут предоставлять свою вычислительную мощность и пропускную способность для реализации транскодирования и распространения видеопотока, **таким образом "pay-as-you-go" сеть (сеть, в которой пользователь платит по мере получения услуги) с автоматическим само-масштабированием становится доступной для разработчиков, которые могут просто отправлять в нее свои прямые трансляции и получать подробные сведения о масштабировании, оплате и медиа-хостинге**.
 
-## Livepeer Protocol ###########################################
+## Протокол Livepeer ###########################################
 
-The Livepeer Protocol defines how the various actors in a live streaming ecosystem participate in a secure and economically rational way. The two major areas that the protocol needs to address are the actual distribution of live video from the source to a large number of consumers in a performant and scalable way, and the economic incentives for encouraging participation in the network in a secure and game-theoretic manner. While this whitepaper will touch on the live video distribution itself where overlapping with the economic protocol, it will largely focus on the latter in order to demonstrate security and economic alignment. At the highest level, the protocol is designed to:
+Протокол Livepeer определяет, каким образом различные участники в экосистеме прямых видеотрансляций используют сеть безопасным и экономически рациональным образом. Два важнейших момента, которые необходимо учитывать протоколу, это фактическое распространение потокового видео от источника к большому числу потребителей рациональным и масштабируемым способом, а также экономические стимулы для поощрения участия в сети в безопасной и игровой манере. Хотя этот технический документ будет в основном описывать технологию распространения потокового видео, мы будем много внимания уделять экономике процесса, чтобы продемонстрировать безопасность и экономическую согласованность. Итак, на самом высоком уровне протокол предназначен для того, чтобы:
 
-- Allow any node to send a live video into the network, and optionally pay to have it transcoded into various formats and bitrates.
-- Allow any node to request the video from the network.
-- Allow participants to contribute their processing power and bandwidth in service of transcoding and distribution of video, and to be compensated accordingly.
+- Разрешить любому узлу отправлять видеопоток в сеть и, при желании, платить за его перекодирование в различные форматы и битрейты.
+- Разрешить любому узлу запрашивать видео из сети.
+- Разрешить участникам добавлять свои вычислительные мощности и пропускную способность через службу транскодирования и распространения видео и получать соответствующее вознаграждение.
 
-In a decentralized network where participants are rewarded in proportion to the amount of work that they contributed, the two big challenges that need to be addressed to ensure security are:
+В децентрализованной сети, где участники получают вознаграждение пропорционально объему работы, который они сделали, для обеспечения безопасности необходимо решить две проблемы:
 
-- Can it be verified that the work that the nodes did was done correctly?
-- Are the nodes being awarded for real work that contributed value to the network, as opposed to fake work done in an attempt to gain token allocations unfairly?
+- Можем ли мы проверить, что работа, выполненная узлами, была выполнена правильно?
+- Вознаграждаются ли узлы за реальную и полезную для сети работу, а не за поддельную, выполненную лишь для того, чтобы обманным путем получить токены?
 
-The Livepeer protocol is designed to address both the verification of work and the prevention of fake work, while also offering solutions for automatic scalability of the network and baked in governance for protocol evolution over time.
+Протокол Livepeer предназначен как для проверки выполненной работы, так и для предотвращения фальсификации работы, а также предлагает решения для автоматического масштабирования сети и обеспечивает управление развитием протокола с течением времени.
 
-### Video Segments
+### Сегменты видео
 
-The core unit of media within Livepeer is what we will call a `segment`. A segment is a time sliced chunk of multiplexed audio and video of time length `t`. Every segment in the Livepeer network is unique, and contains the cryptographic evidence to verify that the broadcaster intended this specific data for this specific segment. Each stream is made up of many consecutive segments, each containing a sequence number identifying their proper ordering. A segment contains the following fields:
+Основная медиа единица в Livepeer - это то, что мы будем называть «сегментом». Сегмент - это отрезок мультиплексированного аудио и видео продолжительностью `t`. Каждый сегмент в сети Livepeer уникален и содержит криптографическое свидетельство, подтверждающее, что вещатель приготовил эти конкретные данные для этого конкретного сегмента. Каждый поток состоит из множества последовательных сегментов, каждый из которых содержит порядковый номер, обеспечивающий их правильный порядок. Сегмент содержит следующие поля:
 
-| Video Segment Field | Description |
-|--------|--------|
-| **StreamID** | Identifies the origin node and stream that this segment belongs to. |
-| **SequenceNumber** | The sequential order that this segment belongs in the original stream. |
-| **DataPayload** | The binary metadata and data representing the audio/video in this segment. |
-| **DataHash** | The hash of the data payload. |
-| **BroadcasterSignature** | A signature from the broadcaster of `Priv(StreamID, SequenceNumber, hash(StreamID, SequenceNumber, DataHash))` which can be used to attest and verify that the broadcaster claims this to be the true data for this unique segment. |
+| Поле видео сегмента | Описание |
+|--------| --------|
+| **StreamID** | Определяет исходный узел и поток, которому принадлежит этот сегмент. |
+| **SequenceNumber** | Порядковый номер этого сегмента в исходном потоке. |
+| **DataPayload** | Метаданные в двоичном виде и аудио/видео данные этого сегмента. |
+| **DataHash** | Хэш полезных данных. |
+| **BroadcasterSignature** | Подпись вещателя `Priv(StreamID, SequenceNumber, hash(StreamID, SequenceNumber, DataHash))`, которая позволяет проверить и подтвердить, что это истинные данные для этого уникального сегмента. |
 
-The Livepeer protocol generally uses segments as the unit of work for transcoding, distribution, and payments.
+Протокол Livepeer использует видео сегменты в качестве единиц работы для транскодирования, распространения данных и платежей.
 
-### Livepeer Token
+### Токен Livepeer
 
-The Livepeer Token (LPT) is the protocol token of the Livepeer network. But it is not the medium of exchange token. Broadcasters use Ethereum's Ether (ETH) to broadcast video on the network. Nodes who contribute processing and bandwidth earn ETH in the form of fees from broadcasters. LPT is a staking token that participants who want to perform work on the network stake in order to coordinate how work gets distributed on the network, and to provide security that the work will get done honestly and correctly. LPT has the following purposes:
+Токен Livepeer (LPT) является токеном протокола сети Livepeer. Но он не является средством для оплаты выполненных заданий. При трансляции видео в сети для этой цели вещатели используют токен Ethereum'а (ETH). Узлы, которые вносят вклад в обработку и пропускную способность, получают ETH в виде комиссионных от вещателей. LPT - это токен для обозначения доли (staking), который используют участники, желающие выполнять задания сети, чтобы скоординировать распредение заданий по сети и обеспечить безопасность выполнения заданий (задания должны выполняться правильно и честно). На LPT возлагаются следующие задачи:
 
-- It serves as a bonding mechanism in a delegated proof of stake system, in which stake is delegated towards transcoders (or validators) who participate in the protocol to transcode video and validate work. The token, and potential slashing that occurs due to protocol violation, is necessary in order to secure the network against a number of attacks. More below.
-- It routes work through the network in proportion to the amount of staked and delegated token, essentially serving as a coordination mechanism.
-- It is a unit of account that is specific to the Livepeer ecosystem, which forms the basis of a SectorCoin concept, applicable to additional functionality to be introduced in the future [[4](#references)]. Services such as DVR, closed captioning, ad insertion/monetization, and analytics can all plug into the Livepeer ecosystem and potentially make use of the security provided by staking LPT.
+- В сети Livepeer, основанной на консенсусе Delegated Proof of Stake (DPOS), он служит механизмом связывания (bonding), в котором доля (stake) делегируется транскодерам (или валидаторам), участвующим в протоколе для реализации транскодирования видео и проверки заданий. Токен LPT и механизм его сокращения (в случае нарушения правил протокола) необходимы для защиты сети от ряда атак. Подробнее об этом смотрите ниже.
+- Он распределяет задания между узлами сети пропорционально количеству делегированных узлам токенов, реализуя, по сути, механизм координации.
+- Он является единицей учета для экосистемы Livepeer, с помощью которой формируется основа для концепции SectorCoin, применимой к дополнительному функционалу, реализуемому в будущем [[4](#references)]. Такие сервисы, как DVR, субтитры, вставка/монетизация рекламы и аналитика, смогут подключаться к экосистеме Livepeer и рассчитывать на безопасность, которую обеспечивает механизм ставок при помощи токена LPT.
 
-An initial allocation of Livepeer Token will be distributed so that stakeholders can fulfill various roles in, and use the network, and then additional token will be issued according to algorithmically programmed issuance over time. See the [Token Distribution](#token-distribution) section.
+Первоначальное распределение токена Livepeer будет происходить таким образом, чтобы заинтересованные стороны смогли начать выполнять различные роли в сети, а затем, в соответствии с определенным алгоритмом, будут выпускаться дополнительные токены. Смотрите раздел [Распределение токенов] (#token-distribution).
 
-Following the conventions of Ethereum and many popular ERC20 tokens [[16](#references)], LPT will be divisible by 10 ^ 18, with larger denominations such as the LPT itself intended to be used for user level transactions such as staking, and smaller denominations intended to be used for protocol accounting.
+В соответствии с соглашениями Ethereum и многих популярных токенов стандарта ERC20 [[16](#references)], LPT будет делиться на 10 ^ 18, причем более крупные номиналы, такие как сам LPT, будут предназначены для использования на транзакциях пользовательского уровня, таких как механизм ставок (staking), а меньшие номиналы будут предназначены для рассчетов на уровне протокола.
 
-### Protocol Roles
+### Роли в протоколе
 
-Before going forward, let’s define the roles in the network so that there is a common vocabulary for discussing the protocol. A Livepeer node is any computer running the Livepeer software.
+Прежде чем продолжить, давайте определим роли в сети, чтобы используемые при описании протокола термины были понятны. Узел Livepeer - это любой компьютер, на котором запущено программное обеспечение Livepeer.
 
-| Node Role | Description |
+| Роль узла | Описание |
 |--------|-----------|
-| **Broadcaster** | Livepeer node publishing the original stream |
-| **Transcoder** | Livepeer node performing the job of transcoding the stream into another codec, bitrate, or packaging format. |
-| **Relay Node** | Livepeer node participating in the distribution of live video and passing of protocol messages, but not necessarily performing any transcoding. |
-| **Consumer** | Livepeer node requesting the stream, likely to view it or serve it through a gateway to their app or DApp’s users. |
+| **Broadcaster** | Узел Livepeer, который отправляет видеопоток в сеть **("вещатель")**. |
+| **Transcoder** | Узел Livepeer, выполняющий работу по кодированию потока в другой кодек, битрейт или формат упаковки **("транскодер")**. |
+| **Relay Node** | Узел Livepeer, который участвует в распространении видеопотока и передаче протокольных сообщений, но не обязательно выполняет какое-либо транскодирование **("ретранслятор")**. |
+| **Consumer** | Узел Livepeer, запрашивающий поток. Может просматривать его или отправлять через шлюз на свои приложения или пользовательские DApp **("потребитель")**. |
 
-In addition to the above roles played by users running Livepeer nodes, the protocol also will refer to the following systems. While we use certain specific systems to make reference to a possible implementation, alternative systems can also be swapped in if they provide similar functionality and cryptoeconomic guarantees:
+В дополнение к вышеуказанным ролям, которые играют пользователи, использующие узлы Livepeer, протокол также будет ссылаться на определенные системы и платформы. Хотя мы используем сейчас конкретные системы, они могут быть заменены другими, обеспечивающими аналогичную функциональность и криптоэкономические гарантии:
 
-| System Role | Description |
+| Роль системы | Описание |
 |-------|----------|
-| **Swarm** | Content addressed storage platform. Data can be guaranteed to be available there temporarily during the verification process via SWEAR protocol [[7, 12](#references)]. *(Note in this document we refer to Swarm, but other content addressed storage platforms can be substituted if data availability can be guaranteed with high probability).* |
-| **Livepeer Smart Contract** | Smart contract running on the Ethereum network [[1](#references)]. |
-| **Truebit** | Blackbox verification protocol that guarantees correctness of computation placed on chain (at a hefty cost) [[6](#references)]. (<http://truebit.io>) |
+| **Swarm** | Платформа хранения, в которой адресация данных основывается на самих данных. Данные могут быть гарантированно временно доступны во время процесса проверки по протоколу SWEAR [[7, 12](#references)]. *(Обратите внимание, что в этом документе мы ссылаемся на Swarm, но другие аналогичные платформы для хранения данных могут заменить Swarm, если доступность данных в них будет гарантирована с более высокой вероятностью).* |
+| **Livepeer Smart Contract** | Смарт-контракт, работающий в сети Ethereum [[1](#references)]. |
+| **Truebit** | Протокол проверки черного ящика, который гарантирует правильность вычислений, размещенных в блокчейне (дорогой ценой) [[6](#references)]. (<http://truebit.io>) |
 
-Here is a visual overview of the roles, and the ways in which they communicate with one another in the work verification process described below.
+Вот визуальный обзор ролей и способов их взаимодействия друг с другом в процессе проверки работы, описанном ниже.
 
-<img src="https://livepeer-dev.s3.amazonaws.com/docs/lpprotocol.png" alt="Protocol Visual Overview" style="width: 750px">  
+<img src = "https://livepeer-dev.s3.amazonaws.com/docs/lpprotocol.png" alt = "Визуальный обзор протокола" style = "width: 750px">
 
-*Segments flowing from the broadcaster to the transcoder and eventually to the consumer. The transcoder ensures they have signatures and proof of work to participate in the work verification procedure.*
+*Сегменты, поступающие от вещателя к транскодеру и, в конечном итоге, к потребителю. Транскодер обеспечивает наличие подписей и доказательств выполнения работы (proof of work) для участия в процедуре проверки работы.*
 
-**Note on Transcoders:** Transcoders play the most critical role in the Livepeer ecosystem. They are the ones who are taking an input stream and converting it into many different formats in a timely manner for low latency distribution. As such they benefit from high availability, efficient, powerful hardware (potentially with GPU accelerated transcoding), high bandwidth connections, and solid DevOps practices. Transcoders should churn far less than other network participants, as when they take on the job of transcoding a stream, it’s less than ideal if they drop off the network. While the network can scale to support many participants playing the role of transcoder (and earning the requisite token allocations), this is a special role that’s delegated from most network participants, in order to ensure that a reliable network that provides value to broadcasters is maintained. More below on this delegation.
+**Примечание по транскодерам:** Транскодеры играют наиболее важную роль в экосистеме Livepeer. Так как именно они принимают входящий поток и с нужной скоростью преобразуют его во множество различных форматов для распространения с низкой задержкой (low latency distribution). Таким образом, получаемое ими вознаграждение напрямую зависит от их высокой доступности, эффективного, мощного оборудования (возможно, с ускоренным транскодированием при помощи GPU), каналов связи с высокой пропускной способностью и надежных методов DevOps. Текучка среди транскодеров должна происходить в значительно меньшей степени, чем среди других участники сети, так как если они берут на себя задание по перекодированию потока, а затем вдруг выходят из сети, это очень плохо сказывается на работоспособности всей системы. Несмотря на то, что сеть может масштабироваться для поддержания множества участников, играющих роль транскодеров (и участвующих в получении токенов), в процедуре назначения на роль транскодера участвует большинство пользователей сети для того, чтобы обеспечить итоговую надежность, представляющую ценность для вещателей. Подробнее об этом назначении на роль транскодера ниже.
 
-### Consensus
+### Консенсус
 
-Livepeer has a two layer consensus system. The LPT ledger and transactions are secured by the underlying blockchain, such as Ethereum. Any transfer of the LPT token or any transaction in the system can be considered to have been confirmed with the same security as the underlying proof of work or proof of stake blockchain. The second layer however, dictates the distribution of newly generated LPT. This is governed by the Livepeer Smart Contract, and participation in the protocol by various actors. While there is no consensus required per say, in terms of acceptance and validation of previous blocks, the protocol defines rules for participation and conditions upon which actors will be penalized (slashed) for failing to fulfill their role.
+Livepeer имеет двухуровеневую систему консенсуса. При этом операции с LPT и транзакции защищены базовым блокчейном, таким как Ethereum. Вследствие чего любая передача токена LPT или любая транзакция в системе может считаться подтвержденной с той же надежностью, что и базовое доказательство сети Ethereum. При этом второй уровень консенсуса определяет распределение вновь выпущенных токенов LPT. Он регулируется смарт-контрактом Livepeer и различными участниками протокола. Несмотря на то, что с точки зрения принятия и проверки предыдущих блоков никакого консенсуса не требуется, этот протокол определяет правила участия и условия, на которых действующие лица будут наказаны (сокращение токенов) за невыполнение своей роли.
 
-This second level of consensus governing the newly generated token is based upon Delegated Proof of Stake (DPOS), as inspired by systems like Bitshares, Steem, Tendermint, and Casper [[5, 9, 10, 11](#references)]. The role of validators in the network is played by Transcoders. Any user can delegate their stake towards a transcoder, who then needs to perform transcoding jobs in the network, participate in the work verification protocol, and invoke functions on chain at specific intervals to validate this work. The protocol will distribute fees and newly generated token, and it will slash the stake of badly behaved actors. The validation result will be recorded on-chain via Truebit after it performs the validation, so there will be no room for disputes between the broadcaster and the transcoder.
+Этот второй уровень консенсуса, регулирующий вновь выпущенный токен, использует Delegated Proof of Stake (DPOS) благодаря вдохновению от таких систем как Bitshares, Steem, Tendermint и Casper [[5, 9, 10, 11](#references)]. Роль валидаторов в сети играют транскодеры. При этом любой пользователь может делегировать свою долю (stake) транскодеру, которому затем необходимо выполнять задания транскодирования в сети, принимать участие в протоколе проверки выполненных заданий и вызывать системные функции через определенные промежутки времени. Протокол будет распределять получаемые за транскодирование комиссионные (fees) и сгенерированные LPT токены так, что это будет сокращать долю (stake) участников, действующих против правил протокола. Результат проверки будет зафиксирован при помощи Truebit после того, как эта проверка будет выполнена, поэтому для споров между вещателем и транскодером просто не будет места.
 
-### Bonding + Delegation
+### Связывание + Делегирование
 
-In Livepeer, in order to indicate stake in the network, nodes must bond some amount of their LPT. They do this through the `Bond()` transaction, which will tie up their stake in the smart contract until they `Unbond()`, at which point they will enter an unbonding state which will last for `UnbondingPeriod` time. Upon completion of the `UnbondingPeriod` they can then withdraw their LPT.
+В Livepeer чтобы обозначить свою долю в сети, узлы должны сделать связывание (bonding) некоторого количество своих LPT токенов. Сделать это можно при помощи транзакции `Bond()`, которая будет осуществлять связывание доли в смарт-контракте до тех пор, пока не будет сделана транзакция `Unbond()`, после которой узел войдет в состояние `unbonding`, которое будет длиться в течение времени `UnbondingPeriod`. По завершении `UnbondingPeriod` несвязанные LPT токены можно будет вывести.
 
-The bonded amount is used to delegate stake towards a Transcoder. The network supports `N` active transcoders at any one time, which is a moveable network parameter. Any node can indicate that it wishes to be a Transcoder with a `Transcoder()` transaction, and the protocol will select the `N` transcoders with the most cumulative stake (their own + delegated from other nodes) at the start of each round, along with one random transcoder from the waitlist.
+Количество связанных (bonded) LPT токенов указывает, какая доля делегируется транскодеру. При этом сеть на постоянной основе поддерживает `N` активных транскодеров, и это число является изменяемым параметром сети. Любой узел может указать, что он хочет быть транскодером с помощью транзакции `Transcoder()`. Протокол в начале каждого раунда выбирает `N` транскодеров с наибольшей совокупной долей (собственные LPT + делегированные LPT от других узлов) вместе с одним случайным транскодером из списка ожидания.
 
-Newly generated token in Livepeer is distributed to bonded nodes in relative proportion to the amount of work that they have bonded (minus fees), as long as they’ve delegated towards transcoding nodes that behave according to the protocol. Bonds can be slashed (reduced by a certain percentage) if the nodes that they’ve delegated towards do not behave and violate one of the slashing conditions. Nodes who have bonded and delegated towards a Transcoder also receive a portion of the fees that the Transcoder generates through transcoding jobs on the network. In essence, nodes who perform work, earn the fees that broadcasters paid for that work.
+Узел, делегировавший часть своих LPT токенов транскодеру, называется "связанным" (bonded). Вновь сгенерированный LPT токен распределяется между связанными узлами пропорционально объему работы, с которым они связаны (за вычетом сборов транскодера). Но только если они делегированы транскодерам, которые ведут себя по правилам протокола. Если же транскодеры, которым они делегированы, не ведут себя как полагается и выполняется одно из условий сокращения, связанные узлы могут потерять часть своих LPT (токены будут уменьшены на определенный процент). Связанные узлы также получают часть комиссионных в ETH, которые транскодер получает благодаря выполнению заданий по транскодированию. То есть, транскодеры, выполняющие задания, получают комиссионные в ETH, которые вещатели платят им за эту работу.
 
-Going forward, when this document uses the term "delegator", it is referring to bonded nodes who have delegated their stake towards a transcoder candidate, instead of delegating it towards themselves as a transcoder.
+В дальнейшем, когда в этом документе используется термин "делегатор" (delegator), подразумеваются связанные узлы, которые делегировали свою долю кандидату в транскодеры, а не себе самому в качестве транскодера.
 
-In summary, participants choose to bond their stake for the following reasons:
+Таким образом, участники могут захотеть связать свою долю LPT с тем или иным транскодером по следующим причинам:
 
-- Participate in delegating towards effective transcoders who will provide great service to the network, ensuring its value to broadcasters.
-- Build reputation and future-work allocation in form of allocated token in proportion to stake.
-- Earn fees generated from transcoders.
-- They may wish to be a Transcoder.
+- Чтобы делегировать свою долю эффективным транскодерам, которые будут хорошо выполнять свои функции, повышая ценность сети для вещателей.
+- Чтобы повысить репутацию и в будущем получать больше результатов работы в форме вновь выпущенных токенов пропорционально доле.
+- Чтобы зарабатывать комиссионные с транскодеров.
+- Чтобы, возможно, самому стать транскодером.
 
-### Transcoder() Transaction
+### Транзакция Transcoder()
 
-A node indicates their willingness to be a transcoder by submitting a `Transcoder()` transaction, which publicizes the following three properties:
+Узел указывает свою готовность быть транскодером, отправляя в сеть транзакцию Transcoder(), которая содержит следующие три параметра:
 
-- `PricePerSegment`: the lowest price they are willing to accept to transcode a segment of video
-- `BlockRewardCut`: The % of the block reward that bonded nodes will pay them for the service of transcoding. (Example 2%. If a bonded node were to receive 100 LPT in block reward, then 2 LPT to the transcoder).
-- `FeeShare`: The % of the fees from broadcasting jobs that the transcoder is willing to share with the bonded nodes who delegate towards it. (Example 25%. If a transcoder were to receive 100 ETH in fees, they would pay 25 ETH to the bonded nodes).
+- `PricePerSegment`: самая низкая цена, которую транскодер готовы принять для транскодирования сегмента видео.
+- `BlockRewardCut`: процент вознаграждения за блок, который связанные узлы будут платить им за услугу транскодирования. (Например, 2%. Если связанный узел должен будет получить 100 LPT в награду за блок, то 2 LPT он отдаст транскодеру).
+- `FeeShare`: процент от комиссионных за вещание, которым транскодер готов поделиться со связанными узлами, делегировавшими ему свои LPT. (Например, 25%. Если транскодер получит 100 ETH в качестве вознаграждения, он заплатит 25 ETH связанным узлам).
 
-The Transcoder can update their availability and information up until `RoundLockAmount` time before the next transcoding round. This is offered as a % of the round. (Example 10% == 2.4 hours. They can change this information until 2.4 hours before the next transcoding round which lasts for `RoundLength` 1 day). This gives bonded nodes the chance to review the fee splits and token reward splits relative to other transcoders, as well as anticipated fees based upon the rate they're charging and network demand, and move their delegated stake if they wish. At the start of a transcoding round (triggered by a call to the `InitializeRound()` transaction), the active transcoders for that round are determined based upon the total stake delegated towards each transcoder, and stakes and rates are locked in for the duration of that round.
+Транскодеры могут обновлять информацию о себе и о своей доступности вплоть до времени `RoundLockAmount` до начала следующего раунда транскодирования. Это значение указывается в % от раунда. (Например, 10% == 2,4 часа. Транскодеры могут изменить эту информацию за 2,4 часа до следующего раунда транскодирования, который длится `RoundLength` 1 день). Это дает возможность связанным узлам сравнить между собой значения комиссионных сборов и расценок за вещание транскодеров и, при желании, переместить свою долю. В начале раунда транскодирования (инициируемого вызовом транзакции `InitializeRound()`) на основе суммарной доли, делегированной каждому транскодеру, определяются активные транскодеры для этого раунда, при этом доли и параметры комиссиионных у транскодеров фиксируются на время этого раунда.
 
-There is one change that is allowed during the `RoundLockPeriod`: The lowest offered price/segment for any of the candidate transcoders is locked in and can't be moved, but other transcoder candidates can adjust their price/segment downwards. This allows them to match the lowest offered price on the network if they wish in order to guarantee their stake-weighted share of work on the network. They are not allowed to move their offered price upwards during this period.
+Во время `RoundLockPeriod` допускается одно изменение: минимальная предлагаемая цена/сегмент для любого кандидата в транскодеры зафиксирована и не может быть изменена, при этом кандидаты в транскодеры с более высокой ценой могут снизить свою цену/сегмент. Это позволит им соответствовать самой низкой цене, предлагаемой в сети. В течение этого периода им не разрешается повышать предложенную цену.
 
-Here is an example state of Transcoder options that a delegator can review when deciding whom to delegate towards.
+Вот пример параметров транскодера, которые делегат может изучить для принятия решения о том, кому делегировать свои LPT.
 
 | Transcoder ID | PricePerSegment | BlockRewardCut | FeeShare |
 |----|----|----|----|
@@ -190,288 +189,285 @@ Here is an example state of Transcoder options that a delegator can review when 
 | ... | ... | ... | ... |
 | N | 14 wei | 0% | 2% |
 
-*Note on price: In this document we list price/segment. In reality, Livepeer plans to use a gas accounting inspired model where there is a notion of units of gas required for certain job parameters of a segment such as bitrate, encoding, frame size, etc. Price/segment is a stand in, where the incentives are the same, but in reality they’ll likely be communicating price/gas.*
+*Примечание о цене: в этом документе мы указываем цену/сегмент. В действительности, Livepeer планирует использовать модель, основанную на учете газа, в которой есть понятие единиц газа, необходимых для определенных параметров работы сегмента, таких как битрейт, кодирование, размер кадра и т.д. Цена/сегмент - это прием, при котором экономические стимулы такие же, но в действительности транскодеры скорее всего будут сообщать цену/газ.*
 
-### Broadcast + Transcoding Job
+### Вещание и задания по транскодированию
 
-Transcoders who are open for business on the network, throw their hat into the ring for transcoding work by submitting a `TranscodeAvailability()` transaction. This indicates their availability and places them into a pool of transcoders available to take a newly submitted job.
+Транскодеры, которые готовы для работы в сети, бросают свою шляпу в ринг для заданий транскодирования, отправляя транзакцию `TranscodeAvailability()`. Это действие говорит об их доступности и помещает их в пул транскодеров, доступных для приема нового задания.
 
-When a broadcaster submits their stream into the Livepeer network it is given a `StreamID`. This serves as both a unique identifier, and it also contains the origin node address so that nodes know how to request and route requests to consume this stream towards the origin. The stream contains many consecutive `Segments`, as described in the [Video Segments](#video-segments) section. If the broadcaster would like the network to take care of transcoding their stream into all the formats and bitrates necessary to reach every user on every device, then the first step is submitting a transcoding job transaction on chain. Jobs are given a unique ID as well, and the input data to job consists of:
+Когда вещатель отправляет свой поток в сеть Livepeer, ему присваивается `StreamID`. Это служит уникальным идентификатором и содержит адрес узла источника, чтобы другие узлы знали, как запрашивать и куда направлять запросы на использование этого потока. Поток содержит много последовательных `сегментов`, как описано в разделе [Видеосегменты](#video-segments). Если вещатель хочет, чтобы сеть позаботилась о транскодировании его потока во все форматы и битрейты, необходимые для любого пользователя на любом устройстве, тогда первым шагом является отправка транзакции с заданием транскодирования в блокчейн. Заданиям также присваивается уникальный идентификатор, а входные параметры для задания состоят из:
 
-`Job(StreamID, TranscodingOptions, PricePerSegment)`
+`Job (StreamID, TranscodingOptions, PricePerSegment)`
 
-The `TranscodingOptions` define the output bitrates, formats, encodings, etc, and the `PricePerSegment` lists the price that the broadcaster will offer.
+`TranscodingOptions` определяет итоговые битрейты, форматы, кодировки и т.д., А `PricePerSegment` содержит цену, которую предлагает вещатель.
 
-As soon as this transaction is mined, the next blockhash will be used to pseudo-randomly determine the transcoder selected for this job. All transcoders with a price that’s lower than or equal to the price offered will be considered, and the blockhash modulus the number of candidate transcoders (weighted by their stakes) will determine the index of the selected transcoder.
+Как только эта транзакция будет добыта (будет подписан блок с этой транзакцией), хэш следующего блока будет использоваться для псевдослучайного определения транскодера для этого задания. Будут учитываться все транскодеры с ценой, которая ниже или равна предложенной цене, а хэш блока деленный по модулю на число возможных транскодеров (определенных по их долям) будет определять индекс выбранного транскодера.
 
-At this point the broadcaster can begin streaming video segments towards the transcoder, and they’ll participate in the following protocol. The protocol also makes use of a persistent storage solution, for example Swarm, as part of the work verification process.
+Теперь вещатель может начать потоковую передачу видео сегментов в направлении транскодера, и они будут использоваться в описываемом протоколе. Протокол также использует решение для постоянного хранения, например Swarm, как часть процесса проверки работы.
 
-#### Preprocessing
+#### Предварительная обработка
 
-1.  **Broadcaster**  -> **Livepeer Smart Contract**: submits a deposit on chain to cover the cost of the full transcoding job. This can be refilled later at any point, but the Transcoder may stop work if the deposit runs out as they gradually cash in for work done.
+1. **Broadcaster** -> **Livepeer Smart Contract**: отправляет депозит в блокчейн, чтобы покрыть полную стоимость выполнения задания транскодирования. Это может быть в любой момент сделано и позже, однако транскодер может прекратить работу, если депозит вдруг закончится, поскольку он получает деньги за выполняемую работу постепенно.
 
-#### The Job
+#### Задание
 
 2. **Broadcaster** -> **Livepeer Smart Contract**: Job(streamID, options, price/segment)
-    - Creates the job request on chain and places some ETH in escrow to pay for the work.
-3. The protocol can use the next block hash to deterministically select the correct Transcoder for this job.
-4. **Transcoder** -> **Broadcaster**: send output streamID and receipt that the job is accepted.
-5. **Broadcaster** -> **Transcoder**: send stream segments, which contain signatures verifying the input data.
-7. **Transcoder** performs transcoding and makes new output stream available on network
-9. **Transcoder**: Store a transcode receipt for each segment of transcoding work. A transcode receipt has the following fields.
+    - Создает запрос на задание в блокчейне и помещает некоторое количество ETH на депозит для оплаты работы.
+3. Протокол может использовать хэш следующего блока для детерминированного выбора подходящего транскодера для этого задания.
+4. **Transcoder** -> **Broadcaster**: отправляет сгенерированный streamID и квитанцию (receipt) о том, что задание принято.
+5. **Broadcaster** -> **Transcoder**: отправляет сегменты потока, которые содержат подписи для проверки входных данных.
+6. **Transcoder** выполняет транскодирование и делает новый выходной поток доступным для сети.
+7. **Transcoder**: сохраняет квитанцию транскодирования для каждого транскодированного сегмента. Квитанция транскодирования имеет следующие поля.
 
-| Transcode Receipt Field | Description |
+| Поле квитанции транскодирования | Описание |
 |-------|------------|
-| **StreamID** | Identifies the origin node and stream that this segment belongs to. | 
-| **Sequence Number** | The sequential order that this segment belongs in the original stream. |
-| **Input Data hash** | The hash of the input segment data payload. |
-| **Transcoded Data hash** | The hash of the output data after transcoding this segment. |
-| **Broadcaster segment signature** | A signature from the broadcaster of Priv(StreamID, Seq#, Dhash) which can be used to attest and verify that the broadcaster claims this to be the true data for this unique segment. |
-| **Transcoder segment signature** | A signature of all of the above fields from the transcoder attesting to the claim that this specific output transcoding was performed on this specific input. |
+| **StreamID** | Определяет исходный узел и поток, которому принадлежит этот сегмент. |
+| **Sequence Number** | Порядковый номер даннного сегмента в исходном потоке. |
+| **Input Data hash** | Хэш полезных данных входного сегмента. |
+| **Transcoded Data hash** | Хэш выходных данных после транскодирования этого сегмента. |
+| **Broadcaster segment signature** | Подпись от вещателя Priv(StreamID, Seq#, Dhash), которую можно использовать для подтверждения и проверки того, что это подлинные данные для этого уникального сегмента. |
+| **Transcoder segment signature** | Сигнатура всех вышеперечисленных полей от транскодера, подтверждающая, что это конкретное выходное транскодирование было выполнено на этом конкретном входе. |
 
-Whenever the transcoder observes that they are no longer receiving segments, they can call `ClaimWork()` to claim their work.
+Всякий раз, когда транскодер замечает, что он больше не получает сегменты, он может вызвать `ClaimWork()` для запроса работы.
 
-#### End Job
+#### Окончание выполнения задания
 
-10. **Transcoder** -> **Livepeer Smart Contract**: Call `ClaimWork(JobID, StartSegmentSeq#, EndSegmentSeq#, MerkleRoot)`. Transcoder is claiming on chain they have performed work on the claimed segment range, with a merkle root of all of the transcode receipt data to commit to the content of these encoded segments.
-11. Wait for this transaction to be mined, and observe the next blockhash. The protocol can then determine which segments will be verified based upon the `VerificationRate`.
-12. **Transcoder** -> **Swarm**: Write input data payloads for the segments that will be challenged via verification, using SWEAR params to ensure the data will be there long enough for verification (`VerificationPeriod` time).
-13. **Transcoder** -> **Livepeer Smart Contract**: Provide transcode claims on chain for each segment that needs to be verified, along with merkle proofs for the receipts for each segment in the transcode claims. The smart contract can verify the signatures from Broadcaster and **Transcoder** to ensure all data necessary is available to conduct verification, and can verify the merkle proofs against the committed merkle root from `ClaimWork()`.
-14.  **Transcoder** -> **Truebit**: `Verify()`. This is an onchain call to the Truebit smart contract, where the Transcoder provides the Swarm input hash for the challenged segment. (More on verification in the following section)
-15. **Truebit** -> **Livepeer Smart Contract**:  The result of the job is written on chain. This is compared to the transcoding claim result that the Transcoder provided.
-16.  **Livepeer Smart Contract**: at this point the Livepeer smart contract has all the information it needs to determine if the Transcoder’s work is verified.
-    - If verified correct, then use as input to token allocation algorithm and release of escrowed fees.
-    - If incorrect, then Transcoder and its stakers get slashed `FailedVerificationSlashAmount` and the Broadcaster is refunded.
+10. **Transcoder** -> **Livepeer Smart Contract**: Вызов `ClaimWork(JobID, StartSegmentSeq#, EndSegmentSeq#, MerkleRoot)`. Транскодер заявляет в блокчейн, что он выполнил работу над указанным диапазоном сегментов, с указанием корня дерева Меркла, в котором находятся все данные квитанций транскодирования для фиксации содержимого этих закодированных сегментов.
+11. Ждем пока эта транзакция будет добыта, и смотрим на хэш следующего блока. Затем протокол может определить, какие сегменты будут проверены, основываясь на `VerificationRate`.
+12. **Transcoder** -> **Swarm**: Пишем полезные данные (payload) входящего потока для сегментов, которые будут проверены с помощью параметров SWEAR, чтобы гарантировать, что данные будут там достаточно долго для осуществления процедуры проверки (в течение `VerificationPeriod`).
+13. **Transcoder** -> **Livepeer Smart Contract**: Предоставляем в блокчейн заявки на проверку всех проверяемых сегментов вместе с доказательствами Меркла для квитанций для каждого сегмента в заявках на транскодирование. Смарт-контракт сможет проверить подписи от вещателя (Broadcaster) и **транскодера**, чтобы убедиться, что все необходимые для проведения проверки данные доступны, и сможет проверить доказательства Меркла в отношении предоставленного корня Меркла из `ClaimWork()`.
+14. **Transcoder** -> **Truebit**: `Verify()`. Это вызов смарт-контракта Truebit через блокчейн, где транскодер предоставляет входящий хэш Swarm'а для проверяемого сегмента. (Подробнее о проверке в следующем разделе)
+15. **Truebit** -> **Livepeer Smart Contract**: результат выполнения задания записывается в блокчейн. Он сравнивается с результатом заявки на транскодирование, который предоставил транскодер.
+16. **Livepeer Smart Contract**: на данный момент смарт-контракт Livepeer содержит всю информацию, необходимую для определения того, проверена ли работа транскодера.
+    - Если проверка успешно пройдена, то она используется в качестве входных данных для алгоритма выпуска новых токенов и разблокирования депозита для оплаты работы по транскодированию.
+    - Если проверка не пройдена, то транскодер и узлы, делегировавшие ему свои LPT получают штраф (сокращение) в размере `FailedVerificationSlashAmount`, а средства возвращаются вещателю.
 
-The Broadcaster can stop sending segments at any point, which effectively is an `EndJob()`.
+Вещатель (Broadcaster) может прекратить отправку сегментов в любой момент, который фактически является моментом `EndJob()`.
 
-At this point the transcoding has been performed, proof of the work has been claimed on the chain, and failure or success of the verification of the work has been reported. All the info is on chain to determine allocation of fees and token allocations to transcoders and delegators, or slashing in the case of failed verification. Let’s take a look at how work is actually verified.
+На этом этапе было выполнено транскодирование, было заявлено о доказательстве работы в блокчейн, и было сообщено о неудачой или успешной проверке работы. В блокчейне теперь находится вся информация, необходимая для того, чтобы определить распределение комиссиионных и токенов для транскодеров и делегаторов, или сократить их в случае неудачной проверки. Давайте посмотрим, как именно проверяется выполненное задание.
 
-### Verification of Work
+### Проверка выполненного задания
 
-In order to allocate fees to transcoders who claim that they have performed a transcoding job, it’s necessary that the protocol can determine that the job was actually performed correctly with high probability. For this, Livepeer extends the research of, and makes use of, the [Truebit Protocol](http://truebit.io) [[6](#references)].
+Чтобы назначить плату транскодерам, которые утверждают, что они выполнили задание по транскодированию потока, необходимо, чтобы протокол мог с высокой вероятностью определить, что задание действительно было выполнено правильно. Для этого Livepeer использует [протокол Truebit](http://truebit.io) [[6](#references)].
 
-Truebit works by having one participant (the solver) perform the actual work for the fee, in this case transcoding, and then having additional participants (verifiers) verify the work in order to detect mistakes, errors, or cheating. The task is broken down into very small steps, and the verifiers check the work of the solver to find the first step that differs from what they expected it to be. Then, only this one very small step needs to be played out on chain by a smart contract (judge), who can tell which party did the work correctly. The economic incentives, including forced errors to incentivize checking on the part of verifiers, ensure that it is not profitable to cheat or challenge incorrectly, but it is profitable to play the role of checking the work.
+Truebit работает так, что после того как один участник (исполнитель) выполнит фактическую работу за некоторую плату, в нашем случае это задача по транскодированию, другие участники (верификаторы) проверяют результат на наличие сбоев, ошибок или мошенничества. Задача разбита на очень маленькие подзадачи, и верификаторы проверяют работу исполнителя до тех пор, пока не обнаружат первую подзадачу, которая отличается от ожидаемой. Затем, лишь только эта одна очень маленькая подзадача должна быть выполнена в блокчейне с помощью смарт-контракта (судья), который в итоге сможет сказать, какая сторона выполнила работу правильно. Экономические стимулы (вклющие в том числе и искуственно создаваемые ошибки, стимулирующие проверку со стороны верификаторов) гарантируют, что нецелесообразно обманывать или недобросовестно осуществлять проверку результатов, но выгодней проверять выполненную работу как следует.
 
-The downside of this protocol is that it costs between 5x-50x the cost of the original work in order to verify all work. Livepeer uses Truebit as a black box to verify segments, but it gets around having to pay this very high verification tax by only verifying a small percentage of segments randomly, and using slashing in the case of failed verifications. The `VerificationRate` set within Livepeer determines how frequently a specific segment is to be selected for challenge within Truebit, and the randomness of a future block hash after the work has been committed to the blockchain, determines which segments specifically are selected.
+Недостатком этого протокола является то, что его использование стоит от 5x-50x стоимости исходной работы. Livepeer использует Truebit в качестве черного ящика для проверки сегментов, но при этом мы делаем это без необходимости платить очень высокий налог на проверку, проверяя только небольшой процент сегментов, выбранных случайным образом, и используя сокращение (slashing) в случае неудаче при проверке. `VerificationRate`, установленный в Livepeer, определяет, как часто должен быть выбран конкретный сегмент для проверки через Truebit, а случайность хэша будущего блока после записи работы в блокчейне определяет, какие именно сегменты выбираются для проверки.
 
-If work is committed via an `ClaimWork()` call in block `N`, then
+Если работа выполняется с помощью вызова `ClaimWork()` в блоке `N`, то
 
-If `Sha3(N, BlockHash(N), Seg#) % VerificationRate == 0` then the segment # must be verified.
+Если `Sha3(N, BlockHash(N), Seg#) % VerificationRate == 0`, то сегмент # должен быть проверен.
 
-The Transcoder provides Transcode Claims on chain for the candidate segments by invoking the `Verify()` transaction. The Livepeer Smart Contract can verify the authenticity of these claims using the internal signatures and provided merkle proofs, and then invoke a call to Truebit to verify only these segments.
+Транскодер предоставляет заявки на транскодирование (Transcode Claims) в блокчейн для сегментов-кандидатов, вызывая транзакцию `Verify()`. Livepeer Smart Contract сможет проверить подлинность этих заявок, используя внутренние подписи и предоставленные доказательства Меркла, а затем сделать вызов Truebit для проверки только лишь этих сегментов.
 
-Truebit solvers and verifiers access the input data for a segment from a persistent content addressed storage system, such as Swarm. The Transcoder is responsible for verifying that the segment data is available in Swarm, and can optionally look for receipts from the SWEAR protocol [[5](#references)] guaranteeing persistence for a certain period of time, which is long enough for Truebit to play out. Additionally, they can take it upon themselves to run a Swarm node ensuring that the data is available to Truebit verification. If they have reason to believe that data is not available in Swarm, they can provide it, or just call `ClaimWork()` on the previously available data.
+Исполнители и верификаторы Truebit получают доступ к входным данным для сегмента из системы постоянного хранения с адресацией на основе хранимых данных, такой как Swarm. Транскодер отвечает за проверку того, что данные сегмента доступны в Swarm, и может при желании искать квитанции по протоколу SWEAR [[5](#references)], гарантируя постоянство в течение определенного периода времени, которого достаточно для Truebit, чтобы сделать свое дело. Кроме того, они могут взять на себя работу узла Swarm, обеспечивающего доступность данных для проверки через Truebit. Если у них есть основания полагать, что данные недоступны в Swarm, они могут предоставить их или просто вызвать `ClaimWork()` для ранее доступных данных.
 
-Truebit will write the results of the computation (succeeded or failed) back to the Livepeer Smart Contract, which can then be used in the reward and slashing calculations within the protocol. A transcoding node can not predict in advance which segments will be verified, and the following penalties will be felt in the case of cheating or failing to transcode correctly:
+Truebit запишет результаты вычислений (успешная или неудачная проверка) обратно в смарт-контракт Livepeer, который затем можно будет использовать в расчетах вознаграждения и сокращения в протоколе. Узел транскодирования не может заранее предсказать, какие сегменты будут проверены, и в случае мошенничества или неудачного транскодирования будут происходить следующие штрафы:
 
-- `FailedVerificationSlashAmount` will be slashed if they fail a verification from Truebit.
-- `MissedVerificationSlashAmount` will be slashed if they fail to provide transcode claims and invoke Truebit on segments they were required to do so.
-- Lost fee from the broadcaster.
-- Not only will the Transcoder be slashed, but all their delegators will be slashed as well. They will take this account into their decision of who to delegate towards, and the Transcoder could lose the lucrative job they hold.
+- `FailedVerificationSlashAmount` произойдет сокращение, если не будет пройдена проверка через Truebit.
+- `MissedVerificationSlashAmount` произойдет сокращение, если транскодер не сможет предоставить заявки на транскодирование, и произойдет вызов Truebit на сегментах, которые он должен был обработать.
+- Потеря комиссионных от вещателя.
+- Сокращение будет применено не только к транскодеру, но и ко всем его делегаторам. Они примут это во внимание при принятии следующего решения о том, кому делегировать, а транскодеру грозит потеря прибыльной работы.
 
-It is important that it be more profitable to simply stake LPT towards a valid, honestly performing transcoder, than it can be to cheat and take slashing penalties while still collecting fees and token allocations for dishonest work. Careful selection of the slashing params and verification rate can ensure this.
+Важно добиться того, что более выгодным решением будет просто поставить LPT на корректно и добросовестно работающий транскодер, вместо того, чтобы пытаться обмануть и попадать под штрафы, продолжая при этом собирать комиссионные и выпускаемые токены за нечестную работу. Этого можно достичь путем тщательного подбора параметров сокращения (slashing) и интенсивности проверки.
 
-#### A Note On Truebit
+#### Примечание о Truebit
 
-*While the protocol makes use of Truebit in order to provide fully trustless verification of work, it may be necessary in practice to use available solutions that provide verification without the degree of trustlessness that Truebit can offer while Truebit is still under development and testing. Some options, ordered by degree of trustlessness, include:*
+*Несмотря на то, что протокол использует Truebit для обеспечения полностью ненадежной проверки работы, на практике может оказаться необходимым использовать доступные решения, которые обеспечивают проверку без той степени доверия, которую Truebit может предложить, пока Truebit все еще находится в стадии разработки и тестирования. Вот некоторые варианты, упорядоченные по степени ненадежности:*
 
-*1. Livepeer API Based Oracle - Trust Livepeer to verify computation. Very centralized, not ideal for anything beyond testing.*  
-*2. Oraclize Computation Service - Trust a company who provides proofs of computation and who's entire reputation relies upon putting external data on chain with proofs that it wasn't tampered with.*  
-*3. Secure hardware enclaves - Services like Intel SGX or TownCrier provide trusted computing environments. Trust that their hardware implementation is correct and secure. This can be decentralized and audited.*
+*1. Oracle на основе Livepeer API - мы доверяем сети Livepeer при проверке вычислений. Очень централизованное решение, подходящее, пожалуй, только для тестирования.*
+*2. Oraclize Computation Service - мы доверяем компании, которая предоставляет доказательства вычислений и чья репутация полностью зависит от размещения внешних данных в блокчейне с доказательствами того, что они не были подделаны.*
+*3. Безопасные аппаратные анклавы - такие службы, как Intel SGX или TownCrier, предоставляют надежные вычислительные среды. В этом случае, мы верим в то, что их аппаратная реализация является правильной и безопасной. Можно применить децентрализацию и проверку.*
 
+### Генерация токенов
 
-### Token Generation
+Система Livepeer является инфляционной, так как новые токены будут генерироваться и распределяться в соответствии с расписанием, приведенным ниже в разделе [Распределение токенов](#token-distribution). Если все участники сети Livepeer ведут себя в соответствии с протоколом, то новые сгенерированные токены будут распределяться пользователям пропорционально их суммарной доле (за вычетом сборов). Транскодеры берут на себя вызов функции `Reward()` для запуска процедуры создания или сокращения токенов, опираясь на данные, доступные через блокчейн.
 
-Livepeer is inflationary in that new tokens will be generated and allocated over time according to the schedule communicated below in [Token Distribution](#token-distribution). If all roles in Livepeer behave according to the protocol, then newly generated tokens will be allocated to users in proportion to their bonded stake (minus fees). Transcoders have the role of calling the `Reward()` function in order to trigger the new token allocation or slashing which can be computed from all data available on chain.
+Каждый транскодер должен будет вызывать `Reward()` один раз за раунд.
 
-Each transcoder will be required to call `Reward()` once per round.
+- Проверяем, что `Reward()` вызывается активным транскодером.
+- Проверяем, что транскодер еще не вызывал `Reward ()` в этом раунде.
+- Вычисляем количество токенов, которые необходимо создать на основе `InflationRate`. Производим вычисленное количество токенов.
+- Рассчитываем долю транскодера на основе `BlockRewardCut`.
+- Добавляем эту долю к доле транскодера.
+- Распределяем остаток токенов среди делегаторов.
+- Обновляем количество связанных токенов для этого транскодера.
 
-- Ensure that an active Transcoder is calling `Reward()`.
-- Ensure that the Transcoder has not called `Reward()` yet in this round.
-- Compute the number of token to mint based upon the `InflationRate`. Mint this many token.
-- Calculate the Transcoder's cut based upon their `BlockRewardCut`.
-- Distribute this into the Transcoder's bonded stake.
-- Distribute the remainder into the delegators reward pool.
-- Update the bonded amount of token to this Transcoder.
+Неспособность вызвать `Reward()` приводит к потере части выпускаемых токенов и портит репутацию транскодера.
 
-Failure to invoke `Reward()` results in the direct consequence of losing a portion of token allocations, and showing up as a ding on one’s Transcoder reputation when it comes to being elected by Delegators for the role.
+### Сокращение
 
-### Slashing
+Как уже упоминалось ранее, вот условия для сокращения:
 
-As previously mentioned, the conditions for slashing are:
+- Ошибка при проверке
+- Неспособность вызвать проверку, когда это требуется
+- Не выполняется пропорциональное распределение запрашиваемой работы в рамках платформы на основе делегированной доли
 
-- Failing a verification
-- Failing to invoke verification when required to do so
-- Not performing a proportional share of the required work within the platform based upon delegated stake
+Одно из преимуществ построения в экосистеме Ethereum - это преимущество сетевого эффекта, которое вы получаете от возможности строить свою систему поверх других протоколов, таких как Truebit и Swarm/SWEAR. К сожалению, при опоре на эти внешние системы, которые сами по себе имеют внешние зависимости, возникает вероятность того, что какая-либо ошибка или слабость в одном из этих протоколов может привести к процедуре сокращения токенов в Livepeer.
 
-One of the benefits of building within the Ethereum ecosystem are the network effect benefits you receive from being able to build on top of other protocols such as Truebit and Swarm/SWEAR. Unfortunately, with reliance on these external systems, which themselves have external dependencies and incentives, it’s possible that a flaw or weakness in one of those protocols could result in slashing within Livepeer.
+Например, если задание проверки Truebit находилось в их очереди в течение длительного периода времени без какого-либо исполнителя или верификатора, Livepeer не получит результат этой проверки за время до вызова `Reward()`. Проблема также может возникнуть, если в сети Swarm происходит разделение и она не может вовремя предоставить файл верификатору Truebit.
 
-For example, if a Truebit verification job sat in their queue for a long period of time without any solver or verifier claiming it, Livepeer would fail to see the result of that verification in time before `Reward()` was called. Or if the Swarm network suffered a partition and couldn’t propagate the file to the Truebit verifier in time, then this could also create an issue.
+Эти риски могут быть смягчены если так или иначе заинтересовать участников протокола Livepeer брать эти роли на себя, то есть служить верификаторами Truebit и узлами Swarm. Но есть и другой подход, который представляет собой концепцию порогов вероятности для параметров сокращения. Необязательные переменные протокола, такие как `VerificationFailureThreshold`, могут быть установлены так, чтобы указывать, что пока узел проходит, например, 99% проверок, сокращения не будет. Этот подход будет являться еще одной областью исследований, которой мы будем заниматься пока сеть еще не развернута.
 
-These risks can be mitigated by incentivizing these roles to be played in house by participants in the Livepeer protocol, who may find it in their best interest to serve as Truebit verifiers or Swarm nodes. But there’s also another approach which is introducing the concept of probability thresholds on the slashing parameters. Optional protocol variables such as `VerificationFailureThreshold` could be set to indicate that as long as the node passes 99% of verifications they won’t be slashed for example. This will remain a further area of research to be worked out prior to network deployment.
+Проблема с запуском проверки условия сокращения может быть обнаружена любым участником протокола Livepeer. Существует `FinderFee`, который задает процент от суммы сокращения, которую нашедший получит в качестве награды за успешной вызов этого условия сокращения.
 
-The failure to invoke verification slashing condition can be checked and invoked by any Livepeer protocol participant. There is a `FinderFee` which specifies the percent of the slash amount which the finder will receive as a reward for successfully invoking this slashing condition.
+Оставшаяся часть выделенных средств попадет в `CommonPool`, который может быть уничтожен или распределен для общих целей, таких как дальнейшее развитие экосистемы, в соответствии с механизмом управления протоколом.
 
-The remainder of the slashed funds will enter the `CommonPool`, which can be burned or allocated to common uses such as further ecosystem development, according to the governance mechanism of the protocol.
+### Распределение токенов
 
-### Token Distribution
+В качестве токена, который представляет возможность участвовать и выполнять работу в сети с помощью алгоритма DPoS, первоначальное распределение токенов Livepeer будет следовать шаблонам других систем DPoS, которые требуют изначально широкого распространения токена.
 
-As a token that represents the ability to participate and perform work in the network through a DPoS staking algorithm, the initial Livepeer token distribution will follow the patterns of other DPoS systems which require a widely distributed genesis state.
+Первоначально выпущенные токены будут распространены среди сообщества в генезис-блоке и на ранних этапах существования сети. Получатели могут использовать токен для участия в роли транскодера или делегатора. Часть будет выделена группам, которые внесли свой вклад в предварительную работу и выделяли деньги для протокола до его создания, а часть будет выделена для долгосрочного развития проекта.
 
-An initial allocation of the token will be distributed to the community at genesis and over the early stages of the network. Receipients can use it to stake into the role of Transcoder or Delegator. A portion will be allocated to groups who contributed prior work and money towards the protocol before the genesis, and a portion will be endowed for the long term development of the core project.
+После запуска сети выдача токенов будет продолжаться в соответствии с инфляционным графиком с генерацией на уровне `InflationRate` за раунд относительно неактивных токенов. Поскольку токен выдается пропорционально доле всех связанных участников протокола, он служит для стимулирования активного участия. Участники «защищены» от этой инфляции, поскольку получают свою пропорциональную долю. Только неактивные участники, хранящие токен, не связывая его для участия в протоколе, увидят, что их пропорциональное владение сетью ослабляется этой инфляцией.
 
-At the launch of the network, token issuance will continue according to an inflationary schedule with token being generated at `InflationRate` per round relative to the outstanding float of token. As token is issued in proportion to stake of all bonded participants in the protocol, it serves to incentivize active participation. Participants are "protected" from this inflation, due to earning their proportional share. It is only inactive participants who are sitting on token without bonding it for participation, who will see their proportional network ownership dilluted by this inflation.
+Начальная цель для `InflationRate` будет установлена таким образом, чтобы она была направлена на стимулирование приблизительно `ParticipationRate` связанных LPT и активного участия [[19](#references)). Например, если 'ParticipationRate' составляет 50%, то будут существовать стимулы для связывания половины неактивных токенов. Уровень инфляции будет алгоритмически изменяться каждый раунд, чтобы заинтересовать участников. Более высокий уровень инфляции побуждает людей связывать (bond) больше токенов, а более низкий уровень побуждает людей хранить токены несвязанными, в более ликвидном виде. Экономические стимулы должны привести к некоторому балансу в процентном соотношении между ликвидностью и владением сетью.
 
-The initial target for `InflationRate` will be set such that it aims to incentivize approximately `ParticipationRate` of the LPT to be bonded and actively participating [[19](#references)). For example, if `ParticipationRate` is 50% then incentives will exist to have half the oustanding token bonded. The inflation rate will move algorithmically each round to incent the participation target. A higher inflation rate would incent more token to be bonded, and a lower rate would lead to more people choosing liquidity rather than participation. It's this liquidity preference vs network ownership percentage tradeoff which should find equilibrium due to a number of economic factors in the network.
+### Управление
 
-### Governance
+Роль управления в протоколе Livepeer является тройственной:
 
-The role of governance within the Livepeer protocol is intended to be three fold:
+1. Определять сожжение или распределение общих средств, которые были получены в результате сокращения из-за ненадлежащего поведения узлов.
+2. Настраивать параметры сети, чтобы обеспечить здоровую, процветающую сеть, которая будет полезна для вещателей.
+3. Вызывать предложенные обновления протокола децентрализованным способом.
 
-1. Determine the burning or appropriation of common funds which were slashed from misbehaving nodes.
-2. Adjust network parameters to ensure a healthy, thriving network which is valuable to broadcasters.
-3. Invoke proposed protocol updates in a decentralized fashion.
+Многие сетевые параметры, упомянутые в этом документе, такие как `UnbondingPeriod`, `RoundLength`, `ParticipationRate` и `VerificationRate`, являются настраиваемыми. Предложения по настройке этих параметров могут быть отправлены в сеть, и далее процесс управления, включая голосование транскодеров пропорционально их делегированной доле, будет автоматически определять принятие этих изменений в протоколе. Подробная спецификация для управления оставлена для другого документа. [Подробнее здесь](https://github.com/livepeer/wiki/wiki/Governance).
 
-Many of the network parameters referenced in this document such as `UnbondingPeriod`, `RoundLength`, `ParticipationRate`, and `VerificationRate` are adjustable. Proposals for adjustments to these parameters can be submitted, and the governance process, including voting by transcoders in proportion to their delegated stake, will determine adoption of these changes automatically within the protocol. The detailed spec for governance is left for another document. [See more here](https://github.com/livepeer/wiki/wiki/Governance). 
+## Атаки
 
-## Attacks
+В этом разделе содержится обзор различных способов, которыми злоумышленники могут попытаться атаковать сеть Livepeer. Мы используем рациональную модель атакующего, в которой атакующий принимает решения на основе своих собственных экономических интересов. Ряд атак снижается за счет того, что такие атаки невыгодны, но мы также стремимся к тому, чтобы в худшем случае сеть не давала сбоев и страдала лишь снижением эффективности в случае устойчивой атаки, не связанной с получением прибыли.
 
-This section contains a survey of the various ways that malicious actors may try to attack the Livepeer network. We use a rational attacker model in which the attacker makes decisions based upon their own economic self interest. A number of attacks are mitigated via it being unprofitable to conduct such attacks, but we also strive to ensure that at the worst the network suffers decrease of efficiency in the case of a sustained unprofitable attack, and doesn't suffer a failure.
+### Консенсусные атаки
 
-### Consensus Attacks
+Как упоминалось ранее, консенсус в экосистеме Livepeer обеспечивается базовой платформой блокчейна (например, Ethereum). Для атаки 51%, атаки двойной траты токена Livepeer и форка сети потребуются те же ресурсы, что и для атаки на сам Ethereum.
 
-As mentioned previously, consensus in the Livepeer ecosystem is provided by the underlying blockchain platform (Ethereum for example). 51% attacks, double spends of Livepeer Token, and forks of the network would require the same resources and cost-of-attack as Ethereum itself.
+Livepeer - это протокол, основанный на долях (stake), и хотя транскодеры играют роль в процессе проверки работы и в процессе распределения вознаграждений, у них фактически нет обязанности участвовать в процедуре проверки или в процессе принятия заданий от других транскодеров. Они ничего не знают про блокчейн и про проверку предыдущих блоков. Для них просто существуют экономические стимулы для проверки своей собственной работы и получения своей части выпускаемых токенов. Таким образом, атаки, которые существуют для proof-of-stake сетей, такие, например, как Long Range атака, проблема Nothing at Stake и атака подкупом (The Bribe), невозможны, поскольку нельзя попытаться подписать несколько блоков или попытаться создать более длинную цепь из более раннего состояния. Однако следует помнить, что, поскольку базовая цепочка блоков Ethereum переходит на PoS, эти атаки могут возникнуть, если выгода от их проведения для Livepeer превысит стоимость атаки на сам Ethereum.
 
-Livepeer is a staked based protocol, and while Transcoders have the role of participating in the work verification process and the token reward distribution process, they actually do not have the role of validating or accepting other Transcoders' work. There is no concept of a chain, nor is there validation of previous blocks. There simply exists the economic incentives to verify one's own work and distribute one's own portion of token allocations when it is one's turn. As such, attacks that are seen in a proof of stake protocols such as the Long Range Attack, the Nothing at Stake problem, and The Bribe Attack don't apply, as there is no opportunity to attempt to sign multiple blocks or attempt to create a longer chain from an earlier state. However, one should be aware that as the underlying blockchain migrates to proof of stake, these attacks do threaten to undermine Livepeer if the benefit of carrying them out on Livepeer were to exceed the cost of attack on Ethereum itself.
-
-While relying on the security of the underlying blockchain is nice for prevention of consensus attacks, there still exists a class of quality and efficiency attacks that can harm the Livepeer network.
+Хотя полагаться на безопасность лежащего в основе блокчейна полезно для предотвращения согласованных атак, все еще существует класс качественных и эффективных атак, которые могут нанести вред сети Livepeer.
 
 ### DDoS
 
-Denial of Service in Livepeer can go two ways:
+Отказ в обслуживании (DDoS) в Livepeer может происходить двумя способами:
 
-1. A Transcoder can try to prevent or slow down a Broadcaster from getting their encoded stream out to the network by accepting a job but refusing to transcode.
-2. A Broadcaster can prevent a Transcoder from being able to do the job that they believe they were assigned by refusing to send them segments.
+1. Транскодер может попытаться предотвратить или замедлить передачу вещателем своего закодированного потока в сеть, принимая работу, но отказываясь ее транскодировать.
+2. Вещатель может помешать транскодеру выполнять порученную ему работу, отказываясь отправлять ему сегменты.
 
-Both attacks have a cost and can be mitigated, with slight annoyance.
+Обе атаки имеют определенную цену и могут быть нейтрализованы с небольшими последствиями.
 
-In the first case, a Transcoder has to pay to claim their availability on chain. If they are not going to receive a fee because they didn't do the work, then they're throwing ETH away. The Broadcaster can just resubmit the job and be assigned a new Transcoder. One potential option for scalability is that the protocol can identify a number of valid Transcoders in priority order instead of just one, and this way the Broadcaster can just move on without another on chain transaction. Additionally, all stats about accepted jobs and average # of segments transcoded/job, etc, can be calculated from on-chain data, and delegators would use this as input into their decision about whom to delegate towards. Behave poorly and lose your role.
+В первом случае транскодер должен заплатить, чтобы заявить о своей доступности в сети. Если он не собирается получать плату, потому что не выполняет задания, то он теряет ETH. Вещатель может просто повторно отправить задание и таким образом поручить его другому транскодеру. Одним из возможных вариантов масштабируемости является то, что протокол может выявить определенное количество правильно работающих транскодеров в виде списка с указанием приоритета, и таким образом вещатель может просто переходить от одного транскодера к другому без необходимости совершать дополнительные транзакции. Кроме того, все статистические данные о принятых заданиях и среднее количество транскодированных/находящихся в работе сегментов можно рассчитать на основе данных в блокчейне, и делегаторы будут использовать это в качестве анализируемых данных при принятии решения о том, кому делегировать свои токены. Будешь вести себя плохо, потеряешь свою роль в сети.
 
-In the case of a Broadcaster preventing a Transcoder from doing work, this is merely a capacity planning calculation. A Transcoding node can maintain records of its capacity for concurrent jobs, likelihood of a job being active/inactive, and ensure that it always believes it will have capacity for the work that it claims. Simply ignoring or calling `EndJob()` on a node that's refusing to send segments hardly hurts the Transcoder.
+В случае, если вещатель не позволяет транскодеру выполнять работу, это решается просто расчетом планируемой мощности. Узел транскодирования может хранить записи о своей емкости для параллельных заданий, вероятности того, что задание будет активным/неактивным, и гарантировать, что у него всегда будет свободная мощность для задания, которое он запрашивает. Простое игнорирование или вызов `EndJob()` на узле, который отказывается отправлять сегменты, вряд ли повредит транскодеру.
 
-### Useless or Self Dealing Transcoder
+### Бесполезный или замкнутый на себе транскодер
 
-If a Transcoder has enough stake to maintain their position, they could theoretically list a 100% `BlockRewardCut`, 0% `FeeShare`, and charge a high `PricePerSegment` such that they would never have to do any work, yet could collect their token allocation. This is prevented by the `CompetitivenessTolerance` which requires them to contribute some amount of valid work. Additionally, because of the transaction costs of participating in the protocol incurred by Transcoders, it would be more profitable for them to simply stake their token toward a valid Transcoder who was sharing fees with them, than it would be to act as a useless Transcoder who would receive no fees to speak of.
+Если транскодер имеет достаточно связанных токенов для поддержания активного состояния, он теоретически может перечислить 100% `BlockRewardCut`, 0% `FeeShare` и взимать высокий `PricePerSegment`, так что ему никогда не придется выполнять какую-либо работу, но он может получать выпускаемые токены. Этому препятствует параметр `CompetitivenessTolerance`, который требует, чтобы он выдал определенный объем выполненных заданий. Кроме того, из-за транзакционных издержек участия в протоколе, которые несут транскодеры, для них было бы более выгодно просто поставить свой токен на другой активный транскодер, который делился бы с ними еще и комиссионными, чем действовать в качестве бесполезного транскодера, который не будет получать никаких комиссионных.
 
-A misbehaving Transcoder who is outputting invalid output would quickly get slashed down to the point of their stake being reduced too low to actually keep their job and receive any work.
+Неправильно работающий транскодер, который выдает некорректный выходной поток, будет быстро урезан до такой степени, что его доля станет слишком низкой, чтобы фактически сохранить свое активное состояние и получать новые задания.
 
-### Transcoder Griefing
+### Проблемы для транскодера
 
-If a Broadcaster wanted to make the protocol very expensive to operate for a transcoder, it could send transcoders non-consecutive segment numbers. This is because transcoders can claim work for a continuous range of segment numbers in a single transaction, but would have to make many transactions to claim work across random segment number ranges. This can be defended against by the following options:
+Если вещатель хочет сделать протокол очень дорогим для транскодера, он может посылать транскодерам непоследовательные номера сегментов. Это связано с тем, что транскодеры могут претендовать на работу для непрерывного диапазона номеров сегментов в одной транзакции, но для выполнения заявки в разных диапазонах номеров сегментов потребуется много транзакций. От этого можно защититься с помощью следующих параметров:
 
-1. Transcoder calls `EndJob()` and doesn't bother doing the work or attempting to collect the fees. 
-2. Protocol implements on chain parsing or better segment claim encoding in order to reduce fees associated with claiming non-consecutive segments in a single call.
-3. Simply ignore the segments and never claim the work.
+1. Транскодер вызывает `EndJob()` и не беспокоится о том, чтобы выполнить задание или пытаться получить комиссионные.
+2. Протокол реализует синтаксический анализ блокчейна или лучшее кодирование заявок сегментов, чтобы уменьшить расходы, связанные с запросом непоследовательных сегментов в одном вызове.
+3. Просто игнорировать такие сегменты и не брать их в работу.
 
-This attack has a high cost to a broadcaster since they must have a deposit and submit jobs on chain in order to even get assigned to a transcoder in the first place. They have the ability to make life annoying for a transcoder and potentially lose efficiency, but not cause damage to the network.
+Эта атака дорого обходится вещателю, так как он должен иметь депозит и отправлять задания в блокчейн, чтобы для начала вообще получить назначение на транскодер. Эта атака способна помешать работе транскодера и потенциально снизить его эффективность, но не наносет ущерб сети.
 
-### Chain Reorg
+### Реорганизация блокчейна
 
-When a broadcaster submits a job to the Livepeer Smart Contract, the protocol uses the current block hash to determine which transcoder will be assigned the job. Reorganizations of the underlying blockchain can cause confusion in this scenario. While this is not "an attack" directly, a transcoder will be valid one second, and then upon reorganization, will no longer be valid. When a reorg is detected the broadcaster can either redirect the stream towards the new valid transcoder, or the protocol can detect uncle blocks that are included in the main chain, and consider a transcoder to be valid if an uncle block within a given threshold would have made them valid. 
+Когда вещатель передает задание в смарт-контракт Livepeer, протокол использует хеш текущего блока, чтобы определить, какому транскодеру будет назначено задание. Реорганизации базового блокчейна могут вызвать путаницу в этом сценарии. Хотя это не совсем «атака», транскодер будет в рабочем состоянии в течение одной секунды, а затем сразу после реорганизации базового блокчейна больше не сможет работать. При обнаружении реорганизации вещатель может либо перенаправить поток на новый действующий транскодер, либо протокол может обнаружить uncle-блоки, включенные в основную цепочку, и считать, что транскодер в рабочем состоянии, если uncle-блок находится в пределах определенного порогового значения.
 
-## Live Video Distribution ###########################################
+## Распространение потокового видео ###########################################
 
-This whitepaper has largely focused on the economic incentives and protocol for ensuring proper transcoding of live video, which is necessary to support adaptive bitrate streaming and reach every device. But equally important is the distribution of video throughout the network so that it can be consumed with high quality and low latency. The economics of distribution rely on tit-for-tat bandwidth accounting as popularized by Bittorrent, and extended via protocols like SWAP [[13](#references)]. As a simplification, nodes pay to request a segment of video, and nodes get paid to serve a segment of video. If a node already has a segment and can serve it to multiple requestors, it is profitable. We call this type of node, a Relay node.
+В этом документе основное внимание уделялось экономическим вопросам и протоколу для обеспечения надлежащего транскодирования потокового видео, что необходимо для осуществления потоковой передачи видео с адаптивным битрейтом на любые устройства. Но не менее важным является распространение данных видеопотока по сети, чтобы он был получен потребителем в высоком качестве и с низкой задержкой. Экономика распространения видеопотока основывается на учете пропускной способности по принципу «один за другим», который уже был популяризован Bittorrent и расширяется с помощью таких протоколов, как SWAP [[13](#references)]. Проще говоря, одни узлы получают плату за обработку сегмента видео, а другие узлы платят за обработку сегмента видео. Ситуация складывается выгодным образом, если у узла уже есть сегмент и он может отправить его на несколько узлов-заказчиков. Мы называем этот тип узла `узлом ретрансляции` (Relay node).
 
-Different incentives exist when it comes to bandwidth for nodes playing different roles in the network.
+Когда речь идет о пропускной способности узлов, играющих разные роли в сети, мы видим различные интересы участников.
 
-* Consumers may be willing to exchange upstream bandwidth to serve the content to additional Consumers in exchange for being able to consume the video themselves free of charge. See systems like Webtorrent [[14](#references)].
-* Broadcasters serve as origin nodes and may want to charge for consumption of the video, or may want to subsidize the cost of bandwidth so that everyone can access their video for free.
-* Transcoders and Relay nodes are willing to provide bandwidth in service of distributing video as long as it is profitable. This is similar to the role of traditional CDNs.
+* Потребители могут захотеть предоставить свой пропускной канал для раздачи контента другим потребителям в обмен на возможность бесплатного просмотра видео. Можете изучить такие системы, как Webtorrent [[14](#references)].
+* Вещатели служат исходными узлами и могут взимать плату за потребление видео или могут платить за пропускной канал, чтобы все желающие могли получить бесплатный доступ к этому видео.
+* Транскодеры и ретрансляторы готовы предоставить полосу пропускания для распространения видео, если это выгодно. Это похоже на роль традиционных CDN.
 
+С `сегментами` в качестве основного блока данных, проходящих через сеть, можно реализовать учет полосы пропускания «один за другим», используя ETH в качестве основы для расчета. Мы заимствуем абстракцию контракта чековой книжки (Chequebook Contract) от Swarm [[6](#references)] в качестве метода оплаты за пределами блокчейна (offchain) при расчете в блокчейне. Будущие разработки в экосистеме, включая сеть Raiden [[15](#references)], могут также позволить для этой цели использовать каналы платежей. Поскольку передача токена является для протокола нативным действием, возможно встроить цены, связанные с контентом, непосредственно в протокол. Вещатель может взымать плату непосредственно за время или контент, а узлы в этом случае будут выбирать потоки исходя из наболее высокого соотношения цена/сегмент.
 
+Важно отметить, что хотя плата за полосы пропускания может быть использована для повышения рентабельности запуска ретрансляционных узлов, которые просто передают видео сегменты по сети для увеличения ее емкости подобно CDN, эти узлы стимулируются лишь спросом на контент и не стимулируются выпуском новых токенов. Фактически, поток данных от сети Livepeer может быть отправлен в традиционную CDN (например, Amazon S3, Cloudflare и т.д.) или децентрализованную CDN (например, IPFS или Swarm). Разработка однорангового протокола для доставки видео сегментов является возможностью для оптимизации и повышения производительности сети.
 
-With `Segments` as the core unit of data flowing through the network, it is possible to do tit-for-tat bandwidth accounting using ETH as the basis for settlement. We borrow the Chequebook Contract abstraction from Swarm [[6](#references)] as a method of offchain payment passing with on chain settlement. Future developments in the ecosystem including the Raiden Network [[15](#references)] may allow of payment channels to be used for this purpose as well. Since token transfer is native to the protocol, it is also possible to embed pricing associated with content directly into the protocol. A broadcaster can charge for their time or content directly, and nodes will opt into this transfer of value by paying a higher price/segment which will flow back to the broadcaster.
+Было показано, что одноранговые CDN снижают требования к полосе пропускания на 80-98% по отношению к исходному серверу CDN [[17](#references)], а механизмы, основанные на токенах, существующие в децентрализованных сетях, способны стимулировать заинтересованные стороны разрабатывать и обслуживать открытые версии существующих сегодня проприетарных P2P CDN. Протокол PPSPP [[18](#references)] служит вполне жизнеспособным кандидатом для открытой реализации сети, ориентированной на доставку потокового контента.
 
-What's important to note is that while bandwidth accounting can be used to make it profitable to run Relay Nodes which just pass video segments around the network to add capacity, a-la a CDN, these nodes are purely incentivized by demand for the content, and not incentivized by new token allocations. In fact, the output of Livepeer can be inserted into a traditional CDN (like Amazon S3, Cloudflare, etc) or decentralized CDN (like IPFS or Swarm). Development of this peer-to-peer protocol for video segment distribution itself will be an ongoing opportunity for optimization and improvement in performance.
+Так как эта тема не является критически важной для криптоэкономики протокола Livepeer, детальный ее разбор в этом документе отсутствует, однако все заинтересованные могут [следить] (https://github.com/livepeer/go-livepeer) за тем как происходит разработка, и в будущем обнаружить документ, посвященный исключительно протоколу распространения видео.
 
-Peer-to-peer CDNs have been shown to reduce 80-98% of bandwidth requirements on an origin CDN server [[17](#references)], and the token mechanics seen in decentralized networks can align stakeholders for the development and maintenance of an open version of the proprietary P2P CDNs that exist today. The PPSPP Protocol [[18](#references)] serves as a viable candidate for an open implementation that focuses on delivery of live content.
+## Возможности для применения ###########################################
 
-As non-critical to the cryptoeconomics of the Livepeer protocol, the details are spared from this document, but the interested can [follow along here](https://github.com/livepeer/go-livepeer) with the development, and look for a future document addressing purely the video distribution protocol.
+Проект Livepeer направлен на децентрализацию прямой трансляции видео «один ко многим» (многоадресная передача). Это самая лучшая форма работы средств массовой информации, поскольку она позволяет вещателю напрямую общаться со своей аудиторией без каких-либо интерпретаций и подмен. Это дает каждому желающему возможность выражать свое мнение при помощи этой платформы. Существующие централизованные решения могут пострадать от цензуры, контроля над пользовательскими данными/отношениями/монетизацией со стороны третьих лиц, а также неэффективной структурой затрат на оплату услуг. Вот некоторые из логичных вариантов использования приложений и сервисов на основе Livepeer.
 
-## Use Cases ###########################################
+### Потребление контента по принципу Pay-As-You-Go 
 
-The Livepeer project is concerned with decentralizing one-to-many live video broadcast (multicast). This is the truest form of media distribution, as it allows a broadcaster to connect directly with their audience in a first-hand manner, free from alterations, after-the-fact interpretation, and spin. It gives everyone a platform to have a voice. Existing centralized solutions can suffer from censorship, third party control over user data/relationship/monetization, and inefficient cost structures around payment for the service. Here are some of the logical use cases for applications and services to be built on top of Livepeer.
+Благодаря транзакцям по передаче токенов обладающих ценностью, встроенных в протокол, вещатели смогут напрямую взимать со зрителей плату за использование их прямых трансляций, не требуя пластиковой карты, учетной записи или контроля личности пользователя через централизованную платформу. Такой функционал будет полезен для образовательных каналов (плата за посещение онлайн-курса), каналов с мероприятиями (плата за просмотр концерта или спортивного мероприятия в прямом эфире), развлекательных каналов (плата за просмотр прямого эфира геймера или исполнителя) и многих других вариантов использования - все это при сохранении конфиденциальности зрителя и возможности платить непосредственно вещателю и только за потребленный контент.
 
-### Pay-As-You-Go Content Consumption
+### Автоматически масштабируемые социальные видео сервисы
 
-With a transfer of value transaction baked into the protocol, it is now possible for broadcasters to charge viewers directly for the consumption of their live broadcast, without requiring a credit card, account, or control over user identity via a centralized platform. This has applications in education (pay to attend an online course), events (pay to view a concert or live sporting event), entertainment (pay to watch a gamer or performer's live stream), and many other use cases - all while preserving the privacy of the viewer, and allowing them to pay for only what they consume directly to the broadcaster.
+Одной из проблем создания потребительских видеоуслуг сегодня является масштабирование инфраструктуры для поддержания растущего числа видеопотоков и растущего числа потребителей по мере прибавления новых пользователей. Сервисный уровень, который позволяет разработчикам легко приступить к созданию решения для видеосвязи поверх сети Livepeer, который будет автоматически масштабироваться для поддержания любого количества видеопотоков и зрителей по мере их поступления, станет желанным решением для разработчиков инфраструктуры, которым в противном случае пришлось бы продолжать выделять на это сервера, лицензировать медиа-сервисы и эффективно управлять ресурсами в ситуациях пиковых нагрузок.
 
-### Auto-scaling Social Video Services
+### Журналистика без цензуры
 
-One of the challenges of building consumer video services today is scaling infrastructure to support the demand for the growing number of streams and growing number of consumers as new users are added. A service layer that easily lets developers begin building their video solution on top of the Livepeer Network, which will automatically scale to support any number of streams and viewers as they go, will be a welcome solution to infrastructure developers who would otherwise have to continue provisioning servers, licensing media servers, and efficiently manage resources to handle spikes.
+Современные платформы, такие как Twitter и Facebook, предоставляют потрясающие видео-решения для широкой аудитории, но они также первыми блокируют или подвергают цензуре в случае политических конфликтов. Использование децентрализованной сети, такой как Livepeer, сделало бы почти невозможным предотвратить распространение информации о том, что действительно происходит на местах в режиме реального времени.
 
-### Uncensorable Live Journalism
+### Видео с поддержкой DApps
 
-Current platforms such as Twitter and Facebook provide amazing live video solutions for reaching a large audience, but they're also the first to get blocked or censored in a variety of political conflict situations. Use of a decentralized network such as Livepeer would render it nearly impossible to prevent the word from getting out as to what is really going on on the ground in realtime.
+Существуют децентрализованные приложения (DApps), управляемые в основном экосистемой Ethereum. Однако до настоящего времени не было жизнеспособного решения для встраивания потокового видео в DApp без использования централизованного решения или ограничения количества клиентов-потребителей на основании ограничений WebRTC. Применяя Livepeer в разработке, приложение может быть полностью децентрализовано, но в то же время может использовать потоковое видео в любом масштабе.
 
-### Video Enabled DApps
+## Резюме ###########################################
 
-Decentralized apps (DApps) are beginning to emerge, driven largely by the Ethereum ecosystem. However, to date there hasn't been a viable solution for embedding live video within a DApp without using a centralized solution or limiting the number of consuming clients based on the constraints of WebRTC. By introducing Livepeer to the stack, an application can be fully decentralized, yet still contain live video, at scale, to as many users as wish to consume it.
+Таким образом, протокол Livepeer стимулирует узлы выделять свою вычислительную мощность и пропускную способность для осуществления транскодирования и распространения потокового видео. Проверка работоспособности решается с помощью масштабируемого расширения поверх протокола Truebit, которое стимулирует узлы правильно выполнять операции транскодирования, чтобы получать свои комисионные и выпускаемые токены LPT и сохранять свою роль транскодера. Проблема геймификации сети и фальсификации работы решается экономически, с помощью вознаграждений в системе delegated proof of stake. С экономической точки зрения становится более рациональным просто привязывать свои токены к полезному для сети транскодеру, чем платить за выполнение мнимой работы.
 
-## Summary ###########################################
+Конечным результатом является масштабируемая сеть с возможностью оплаты по мере использования (pay-as-you-go) для децентрализованной прямой трансляции видео - отсутствующий слой в стеке web3, который Livepeer стремится восполнить.
 
-In summary, the Livepeer protocol incentivizes nodes to contribute their processing and bandwidth to the network in service of transcoding and distributing live video. The verification of work is solved by a scalable extension on top of the Truebit protocol which incentivizes nodes to perform transcoding operations correctly in order to earn their fees and token allocations and preserve their value earning role as a transcoder. The gamification of the network and false work problem is solved via the economics of the delegated proof of stake block reward accounting. It becomes more economically rational to simply stake one's tokens towards a value adding node than to pay fees into the network to be distributed to other delegators when performing work that there wasn't actually real demand for.
+## Приложение ###########################################
 
-The end result is a scalable, pay-as-you-go network for decentralized live video broadcast - a missing layer in the web3 stack that Livepeer seeks to fill.
+### Справочник по параметрам протокола Livepeer
 
-## Appendix ###########################################
-
-### Livepeer Protocol Parameter Reference
-
-| Parameter Name | Description | Example Value |
+| Имя параметра | Описание | Пример значения |
 |----|------|---|
-| `T` | Segment length in seconds | 2 seconds |
-| `N` | Number of active transcoders | 144 |
-| `RoundLength` | Length of time between election of a new round of transcoders | 1 day |
-| `InflationRate` | The current target inflation rate per round of LPT. (Moves algorithmically). | .04% (equivalent to 15%/year) |
-| `ParticipationRate` | The target percent of token bonded vs liquid. | 50% |
-| `RoundLockAmount` | Transcoders rates lock in for this percentage of a round at the end of a round so that delegators can review and delegate accordingly without worrying about last minute rate changes. | 10% == 2.4 hours |
-| `UnbondingPeriod` | Time between entering unbonding state, and ability to withdraw the funds. | 1 month |
-| `VerificationPeriod` | The deadline for verifying a job claim after submission of the job claim. This also serves as the minimum period that a receipt of data persistence must be provided in the decentralized storage solution. | 6 hours |
-| `VerificationRate` | The % of segments that will be verified. | 1/500 |
-| `FailedVerificationSlashAmount` | % to slash in the case of a failed verification (beyond the potential allowed failure threshold) | 5% |
-| `MissedRewardSlashAmount` | % to slash in the case of missing a block reward round (Maybe only do this in the case of n consecutive misses) | 3% |
-| `MissedVerificationSlashAmount` | % to slash in the case the transcoder didn’t call verification | 10% |
-| `CompetitivenessTolerance` | If all transcoders were always available and set the same price and fees, they would receive work in proportion to their stake. This parameter sets a % that they have to be within this target work % to be eligible for token allocation. This prevents transcoders from doing very little share of work relative to their stake. | 90% (extreme example. With 100 transcoders and 100,000 segments, this means I am ok if I only did 100 segments (10% of the 1000 I was supposed to do)). |
-| `*SlashingThresholds` (TBD) | Placeholder to indicate that we may not slash on all failures, only if they exceed some threshold % of failure rate. | |
-| `VerificationFailureThreshold` | % of verifications you can fail without being slashed. Useful because of external dependencies like Swarm/Truebit that could cause sporadic failure. | 1% |
-| `FinderFee` | % of slash amount that the finder will receive as compensation. | 5% |
-| `SlashingPeriod` | The deadline for invoking a slashing condition after the `VerificationPeriod` has completed. | 1 hour |
+| `T` | Длина сегмента в секундах | 2 секунды |
+| `N` | Количество активных транскодеров | 144 |
+| `RoundLength` | Промежуток времени между определением активных транскодеров для нового раунда | 1 день |
+| `InflationRate` | Текущий целевой уровень инфляции за раунд LPT. (Изменяется алгоритмически). | .04% (эквивалент 15% / год) |
+| `ParticipationRate` | Целевой процент связанных токенов. | 50% |
+| `RoundLockAmount` | В конце раунда параметры транскодеров фиксируются на величину процента от продолжительности раунда, так что делегаторы имеют возможность просматривать информацию и делегировать, не беспокоясь, что параметров будут изменены в последнюю минуту. | 10% == 2,4 часа |
+| `UnbondingPeriod` | Временной промежуток между моментом перехода в состояние unbonding и возможностью вывода средств. | 1 месяц |
+| `VerificationPeriod` | Крайний срок для подтверждения заявки на работу после ее подачи. Этот период также служит минимальным периодом, в течение которого необходимо отправить квитанцию о целостности данных в систему децентрализованного хранения. | 6 часов |
+| `VerificationRate` | % сегментов, которые будут проверены. | 1/500 |
+| `FailedVerificationSlashAmount` | % сокращения в случае неудачной проверки (за пределами допустимого порога ошибок) | 5% |
+| `MissedRewardSlashAmount` | % сокращения в случае пропуска награды за раунд (возможно, стоить делать это только в случае n последовательных пропусков) | 3% |
+| `MissedVerificationSlashAmount` | % сокращения в случае, если транскодер не вызвал процедуру проверки | 10% |
+| `CompetitivenessTolerance` | Если бы все транскодеры всегда были доступны и устанавливали одинаковую цену и комиссионные, они получали бы работу пропорционально их доле (stake). Этот параметр устанавливает % того, что они должны находиться в пределах этого целевого рабочего %, чтобы иметь право на вновь выпущенные токены. Это препятствует транскодерам выполнять очень небольшую часть работы по отношению к их доле. | 90% (Крайний пример. Со 100 транскодерами и 100 000 сегментами это означает, что я ОК, если я сделал лишь 100 сегментов (10% из 1000, которые я должен был сделать)). |
+| `*SlashingThresholds` (TBD) | Заполнитель, чтобы указать, что мы можем делать сокращения не за каждый сбой, а только сбои, превышающие некоторый частотный порог. | |
+| `VerificationFailureThreshold` | % проверок, которые вы можете не пройти и при этом не получить сокращения токенов. Полезноый параметр,  так как существуют внешние системы, подобные Swarm и Truebit, которые могут приводить к случайным сбоям. | 1% |
+| `FinderFee` | % от суммы сокращения, которую обнаруживший нарушение протокола получит в качестве компенсации. | 5% |
+| `SlashingPeriod` | Крайний срок для вызова сокращения после завершения `VerificationPeriod`. | 1 час |
 
-### Livepeer Protocol Transaction Types
+### Типы транзакций в протоколе Livepeer
 
-| Transaction | Description |
+| Транзакция | Описание |
 |----|------|
-| `Bond()` | Bond stake towards a transcoder. |
-| `Unbond()` | Enter the unbonding state for the fixed `UnbondingPeriod`. |
-| `Transcoder()` | Declare your intentions as a transcoder. |
-| `ResignAsTranscoder()` | Resign your intentions as a transcoder. |
-| `TranscodeAvailability()` | This transcoder is currently open to accepting another job. They’re in the pool to be assigned randomly on new job submissions. |
-| `Job()` | Submit a transcoding job on chain. |
-| `EndJob()` | End the job to relinquish transcoding responsibility. |
-| `Deposit()` | Submit a deposit on chain that will be used and drawn against to pay for jobs. |
-| `Withdraw()` | Withdraw from deposit and unbonded stake. |
-| `ClaimWork()` | End the transcode job and make the claim of which segments you can prove you’ve transcoded via segment range and merkle root. |
-| `DistributeFees()` | Transcoder claims the fees for a particular claim after verification. |
-| `Reward()` | Does all the verifications on chain to either slash or distribute token allocations. Can only be invoked by a transcoder who is active in the current round, once per round. |
-| `Verify()` | Transcoder provides the transcode claims for segments which will be verified along with merkle proofs for comparison with merkle root from `ClaimWork()`. Explicitly call Truebit to perform verification. |
-| `InitializeRound()` | This transaction needs to be invoked once after the new round's start block to initialize the new active transcoder pool. |
-| `UpdateDelegatorStake()` | This allows a delegator to claim their fees + token allocation from previous rounds. It's invoked automatically through unbonding and bonding, but it serves as a failsafe in case the delegator would like to update without changing state. |
-| `*GovernanceTransactions()` | TBD  |
+| `Bond()` | Привязать некоторую долю токенов (stake) к транскодеру. |
+| `Unbond()` | Войти в состояние отвязывания токенов, которое будет длится на протяжении `UnbondingPeriod`. |
+| `Transcoder()` | Объявить о намерении быть транскодером. |
+| `ResignAsTranscoder()` | Заявить об отмене своих намерений быть транскодером. |
+| `TranscodeAvailability()` | Этот транскодер в настоящее время открыт для принятия задания. Транскодеры находятся в пуле и при отправке новых заданий назначаются случайным образом. |
+| `Job()` | Отправить задание по транскодированию в блокчейн. |
+| `EndJob()` | Завершить выполнение задания, чтобы указать на окончание транскодирования. |
+| `Deposit()` | Внести депозит в блокчейн, который будет использоваться для постепенной оплаты выполненных заданий. |
+| `Withdraw()` | Снятие с депозита и получение несвязанной доли (unbonded stake). |
+| `ClaimWork()` | Завершить выполнение задания транскодирования и с помощью диапазона сегментов и корня Меркла указать, какие сегменты были проверенно транскодированы. |
+| `DistributeFees()` | С ее помощью транскодер заявляет о комиссионных после проверки. |
+| `Reward()` | Транзакция выполняет все проверки на основе блокчейна для либо сокращения, либо начисления новых токенов. Может быть вызвана один раз за раунд только транскодером, который активен в текущем раунде. |
+| `Verify()` | Транскодер предоставляет заявки на транскодирование для сегментов, которые будут проверены с использованием доказательств Меркла, при помощи корня Меркла из `ClaimWork()`. Обращается к Truebit для выполнения процедуры проверки. |
+| `InitializeRound()` | Эту транзакцию необходимо вызвать один раз после стартового блока нового раунда, чтобы инициализировать новый активный пул транскодеров. |
+| `UpdateDelegatorStake()` | Эта транзакция позволяет делегатору делать заявку на свои комиссионные и получать вновь выпущенные токены из предыдущих раундов. Транзакция вызывается автоматически при выполнении транзакций связывания и отвязывания, но является отказоустойчивой на тот случай, если делегатор захочет провести обновление без изменения состояния. |
+| `* GovernanceTransactions()` | TBD |
 
-## References ###########################################
+## Ссылки ###########################################
 
 1. Ethereum White Paper - Vitalik Buterin - Ethereum Wiki - <https://github.com/ethereum/wiki/wiki/White-Paper>
 2. Fat Protocols - Joel Monegro - USV Blog - <http://www.usv.com/blog/fat-protocols>
